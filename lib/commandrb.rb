@@ -100,7 +100,7 @@ class CommandrbBot
               next
             end
 
-            if (event.user.bot_account? && command[:parse_bots] == false) || (event.user.bot_account? && @parse_bots == false)
+            if (event.user.bot_account? && command[:parse_bots] == false) || (event.user.bot_account? && @config[:parse_bots] == false)
               next
             end
 
