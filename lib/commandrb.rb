@@ -70,8 +70,8 @@ class CommandrbBot
 
             triggers.each { |trigger|
               @activator = prefix + trigger
+              @activator = @activator.downcase
               if event.message.content.start_with?(@activator)
-                puts '@activator picked.'
                 @continue = true
                 break
               else

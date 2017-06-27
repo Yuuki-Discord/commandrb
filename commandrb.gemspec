@@ -7,9 +7,11 @@ Gem::Specification.new do |s|
   s.authors     = ['Seriel Shirogane']
   s.email       = 'seriel@fl0.co'
   s.files       = ['lib/commandrb.rb']
+  s.required_ruby_version = '>= 2.1'
   s.homepage    =
       'https://github.com/Seriell/commandrb'
   s.license       = 'MIT'
   s.add_runtime_dependency 'discordrb',
                            ['>= 3.0.0']
+
 end
