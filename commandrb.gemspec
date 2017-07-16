@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'commandrb'
-  s.version     = '0.2.3'
-  s.date        = '2017-06-18'
+  s.version     = '0.3.0'
+  s.date        = '2017-07-10'
   s.summary     = 'Commandrb'
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
   s.authors     = ['Seriel Shirogane']
@@ -11,7 +11,5 @@ Gem::Specification.new do |s|
   s.homepage    =
       'https://github.com/Seriell/commandrb'
   s.license       = 'MIT'
-  s.add_runtime_dependency 'discordrb',
-                           ['>= 3.0.0']
-
+  s.add_runtime_dependency 'discordrb', '~> 3.1', '>= 3.1.0'
 end
