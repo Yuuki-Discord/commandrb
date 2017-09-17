@@ -1,19 +1,44 @@
 class CommandrbBot
-  attr_accessor :commands
-  attr_accessor :prefixes
+
+  # Be able to adjust the config on the fly.
+  attr_accessor :config
+
+  # Needed to run the bot, or create custom events.
   attr_accessor :bot
-  attr_accessor :prefix_type
-  attr_accessor :owners
-  attr_accessor :typing_default
+
+  # Can manually manipulate commands using this.
+  attr_accessor :commands
+
+  # Lets you change global prefixes while the bot is running (Not recommended!)
+  attr_accessor :prefixes
+
+
+  def add_command(name, attributes = {})
+    @commands[name.to_sym] = attributes
+  end
+
+  def remove_command(name)
+    begin
+      @commands.delete(name)
+    rescue
+      return false
+    end
+    true
+  end
 
   def initialize(init_hash)
 
+    # Setup the variables for first use.
     @commands = {}
     @prefixes = []
     @config = init_hash
 
-    @config[:prefix_type] = 'rescue' if @config[:prefix_type].nil?
-    @config[:typing_default] =  false if @config[:typing_default].nil?
+    # Load sane defaults for options that aren't specified.
+
+    # @config[:prefix_type] = 'rescue' if @config[:prefix_type].nil?
+    @config[:typing_default] = false if @config[:typing_default].nil?
+    @config[:selfbot] =  false if  @config[:selfbot].nil?
+    @config[:delete_activators] = false if @config[:delete_activators].nil?
 
     if @config[:token].nil? or init_hash[:token] == ''
       puts 'No token supplied in init hash!'
@@ -30,13 +55,9 @@ class CommandrbBot
       end
     end
 
-    @prefixes = []
-
     @config[:owners] = init_hash[:owners]
-    puts 'Invalid owners supplied in init hash!'
 
     @prefixes = init_hash[:prefixes]
-    puts 'Invalid prefixes supplied in init hash!'
 
     @bot = Discordrb::Bot.new(
         token: @config[:token],
@@ -47,13 +68,11 @@ class CommandrbBot
 
     unless init_hash[:ready].nil?
       @bot.ready do |event|
+        event.bot.game = @config[:game] unless config[:game].nil?
         init_hash[:ready].call(event)
       end
     end
 
-    def add_command(name, attributes = {})
-      @commands[name.to_sym] = attributes
-    end
 
     # Command processing
     @bot.message do |event|
@@ -62,24 +81,35 @@ class CommandrbBot
         if event.message.content.start_with?(prefix)
 
           @commands.each { | key, command |
-            if command[:triggers].nil?
-              triggers = [key.to_s]
-            else
-              triggers = command[:triggers]
-            end
+            triggers =  command[:triggers].nil? ? [key.to_s] : command[:triggers]
 
             triggers.each { |trigger|
               @activator = prefix + trigger
               @activator = @activator.downcase
               if event.message.content.downcase.start_with?(@activator)
-                @continue = true
-                break
-              else
-                next
+
+                # Continue only if you've already chosen a choice.
+                unless @chosen.nil?
+                  # If the new activator begins with the chosen one, then override it.
+                  # Example: sh is chosen, shell is the new one.
+                  # In this example, shell would override sh, preventing ugly bugs.
+                  if @activator.start_with?(@chosen)
+                    @chosen = @activator
+                  # Otherwhise, just give up.
+                  else
+                    next
+                  end
+                # If you haven't chosen yet, get choosing!
+                else
+                    @continue = true
+                    @chosen = @activator
+                end
               end
             }
 
             next unless @continue
+
+            break if @config[:selfbot] && event.user.id != @bot.profile.id
 
             # Command flag defaults
             command[:catch_errors] = @config[:catch_errors] if command[:catch_errors].nil?
@@ -87,41 +117,75 @@ class CommandrbBot
             command[:max_args] = 2000 if command[:max_args].nil?
             command[:server_only] = false if command[:server_only].nil?
             command[:typing] = @config[:typing_default] if command[:typing_default].nil?
+            command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
 
+            # If the command is set to owners only and the user is not the owner, show error and abort.
             if command[:owners_only]
-              unless YuukiBot.config['owners'].include?(event.user.id)
+              unless @config[:owners].include?(event.user.id)
                 event.respond('❌ You don\'t have permission for that!')
-                break
+                next
               end
             end
 
+            # If the settings are to delete activating messages, then do that.
+            # I'm *hoping* this doesn't cause issues with argument extraction.
+            event.message.delete if command[:delete_activator]
+
+            # If the command is only for use in servers, display error and abort.
             if command[:server_only] && event.channel.private?
-              event.respond('❌ This command will only work in servers!')
+              # For selfbots, a fancy embed will be used. WIP.
+              if @config[:selfbot]
+                event.channel.send_embed do |embed|
+                  embed.colour = 0x221461
+                  embed.title = '❌ An error has occured!'
+                  embed.description = 'This command can only be used in servers!'
+                  embed.footer = Discordrb::Webhooks::EmbedFooter.new(text: "Command: '#{event.message.content}'")
+                end
+              else
+                # If its not a selfbot, an ordinary message will be shown, may be changed to embed later.
+                event.respond('❌ This command will only work in servers!')
+              end
+              # Abort!
               next
             end
 
+            # If the user is a bot and the command is set to not pass bots OR the user is a bot and the global config is to not parse bots...
+            # ...then abort :3
             if (event.user.bot_account? && command[:parse_bots] == false) || (event.user.bot_account? && @config[:parse_bots] == false)
+              # Abort!
               next
             end
 
+            # If the config is setup to show typing messages, then do so.
             event.channel.start_typing if command[:typing]
 
+            # Grabs the arguments from the command message without the command part.
             args = event.message.content.slice!(@activator.length, event.message.content.size)
+            # Split the arguments into an array for easy usage.
+            rawargs = args
             args = args.split(' ')
 
+            # Check the number of args for the command.
             if args.length > command[:max_args]
+              # May be replaced with an embed.
               event.respond("❌ Too many arguments! \nMax arguments: `#{command[:max_args]}`")
               next
             end
+
+            # If the command is configured to catch all errors, thy shall be done.
             if !command[:catch_errors] || @config['catch_errors']
-              command[:code].call(event, args)
+              # Run the command code!
+              command[:code].call(event, args, rawargs)
             else
+              # Run the command code, but catch all errors and output accordingly.
               begin
-                command[:code].call(event, args)
+                command[:code].call(event, args, rawargs)
               rescue Exception => e
                 event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
               end
             end
+
+            # All done here.
             break
           }
           break
