@@ -46,7 +46,7 @@ class CommandrbBot
     end
 
     init_parse_self = init_hash[:parse_self] rescue nil
-    init_type = init_hash[:type] rescue :bot
+    init_type = @config[:type]
 
     if init_type == :bot
       if init_hash[:client_id].nil?
@@ -63,7 +63,7 @@ class CommandrbBot
         token: @config[:token],
         client_id: @config[:client_id],
         parse_self: init_parse_self,
-        type: init_type
+        type: @config[:type]
     )
 
     unless init_hash[:ready].nil?
@@ -76,6 +76,11 @@ class CommandrbBot
 
     # Command processing
     @bot.message do |event|
+      @command = nil
+      @event = nil
+      @chosen = nil
+      @args = nil
+      @rawargs = nil
       @continue = false
       @prefixes.each { |prefix|
         if event.message.content.start_with?(prefix)
@@ -84,7 +89,7 @@ class CommandrbBot
             triggers =  command[:triggers].nil? ? [key.to_s] : command[:triggers]
 
             triggers.each { |trigger|
-              @activator = prefix + trigger
+              @activator = prefix + trigger.to_s
               @activator = @activator.downcase
               if event.message.content.downcase.start_with?(@activator)
 
@@ -163,7 +168,11 @@ class CommandrbBot
             args = event.message.content.slice!(@activator.length, event.message.content.size)
             # Split the arguments into an array for easy usage.
             rawargs = args
+<<<<<<< HEAD
             args = args.split(' ')
+=======
+            args = args.split(/ /)
+>>>>>>> fb6b1a9c7a757e934830139d7b72a2c97f245090
 
             # Check the number of args for the command.
             if args.length > command[:max_args]
@@ -172,6 +181,7 @@ class CommandrbBot
               next
             end
 
+<<<<<<< HEAD
             # If the command is configured to catch all errors, thy shall be done.
             if !command[:catch_errors] || @config['catch_errors']
               # Run the command code!
@@ -186,8 +196,27 @@ class CommandrbBot
             end
 
             # All done here.
+=======
+            # All done here.
+            @command = command
+            @event = event
+            @args = args
+            @rawargs = rawargs
+>>>>>>> fb6b1a9c7a757e934830139d7b72a2c97f245090
             break
           }
+          # If the command is configured to catch all errors, thy shall be done.
+          if !@command[:catch_errors] || @config['catch_errors']
+            # Run the command code!
+            @command[:code].call(@event, @args, @rawargs)
+          else
+            # Run the command code, but catch all errors and output accordingly.
+            begin
+              @command[:code].call(@event, @args, @rawargs)
+            rescue Exception => e
+              event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
+            end
+          end
           break
         end
       }
