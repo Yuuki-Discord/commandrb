@@ -168,11 +168,7 @@ class CommandrbBot
             args = event.message.content.slice!(@activator.length, event.message.content.size)
             # Split the arguments into an array for easy usage.
             rawargs = args
-<<<<<<< HEAD
-            args = args.split(' ')
-=======
             args = args.split(/ /)
->>>>>>> fb6b1a9c7a757e934830139d7b72a2c97f245090
 
             # Check the number of args for the command.
             if args.length > command[:max_args]
@@ -181,7 +177,6 @@ class CommandrbBot
               next
             end
 
-<<<<<<< HEAD
             # If the command is configured to catch all errors, thy shall be done.
             if !command[:catch_errors] || @config['catch_errors']
               # Run the command code!
@@ -196,13 +191,10 @@ class CommandrbBot
             end
 
             # All done here.
-=======
-            # All done here.
             @command = command
             @event = event
             @args = args
             @rawargs = rawargs
->>>>>>> fb6b1a9c7a757e934830139d7b72a2c97f245090
             break
           }
           # If the command is configured to catch all errors, thy shall be done.
