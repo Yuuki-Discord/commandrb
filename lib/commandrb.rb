@@ -199,7 +199,6 @@ class CommandrbBot
               }
             end
 
-            end
 
             # All done here.
             @command = command
