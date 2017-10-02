@@ -190,14 +190,14 @@ class CommandrbBot
               end
             end
 
-            unless @command[:required_permissions].nil?
-              @command[:required_permissions].each { |x|
+            unless command[:required_permissions].nil?
+              command[:required_permissions].each { |x|
                 if event.user.on(event.server).permission?(:ban_members,event.channel)
                   event.respond('❌ You don\'t have permission for that!')
                   break
                 end
               }
-            end
+              end
 
 
             # All done here.
