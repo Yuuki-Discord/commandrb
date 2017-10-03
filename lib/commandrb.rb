@@ -175,10 +175,11 @@ class CommandrbBot
               else
                 args = event.message.content.slice!(commandArray[0].size + spaces, event.message.content.size)
               end
+              # Split the argmuents into an array for easy usage but keep the raw args !!
+              rawargs = commandArray
+              args = rawargs.split(/ /)
             end
-            # Split the argmuents into an array for easy usage but keep the raw args !!
-            rawargs = args
-            args = args.split(/ /)
+
 
             # Check the number of args for the command.
             if args.length > command[:max_args]
