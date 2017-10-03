@@ -171,9 +171,9 @@ class CommandrbBot
               # Prefixes with spaces are special and need to be parsed differently : )
               if prefix.include? " "
                 spaces += prefix.count(' ')
-                args = event.message.content.slice!(args[0].size + args[1].size + spaces, event.message.content.size)
+                args = event.message.content.slice!(commandArray[0].size + commandArray[1].size + spaces, event.message.content.size)
               else
-                args = event.message.content.slice!(args[0].size + spaces, event.message.content.size)
+                args = event.message.content.slice!(commandArray[0].size + spaces, event.message.content.size)
               end
               # Split the argmuents into an array for easy usage but keep the raw args !!
               rawargs = args
