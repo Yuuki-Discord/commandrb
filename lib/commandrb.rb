@@ -164,11 +164,21 @@ class CommandrbBot
             # If the config is setup to show typing messages, then do so.
             event.channel.start_typing if command[:typing]
 
-            # Grabs the arguments from the command message without the command part.
-            args = event.message.content.slice!(@activator.length, event.message.content.size)
-            # Split the arguments into an array for easy usage.
-            rawargs = args
-            args = args.split(/ /)
+            commandArray = event.message.content.split(' ')
+            # Parse args if args exist !
+            if commandArray[0] != event.message.content.size
+              spaces = 1
+              # Prefixes with spaces are special and need to be parsed differently : )
+              if prefix.include? " "
+                spaces += prefix.count(' ')
+                args = event.message.content.slice!(args[0].size + args[1].size + spaces, event.message.content.size)
+              else
+                args = event.message.content.slice!(args[0].size + spaces, event.message.content.size)
+              end
+              # Split the argmuents into an array for easy usage but keep the raw args !!
+              rawargs = args
+              args = args.split(/ /)
+            end
 
             # Check the number of args for the command.
             if args.length > command[:max_args]
@@ -207,19 +217,6 @@ class CommandrbBot
             @rawargs = rawargs
             break
           }
-          # If the command is configured to catch all errors, thy shall be done.
-          if !@command[:catch_errors] || @config['catch_errors']
-            # Run the command code!
-            @command[:code].call(@event, @args, @rawargs)
-          else
-            # Run the command code, but catch all errors and output accordingly.
-            begin
-              @command[:code].call(@event, @args, @rawargs)
-            rescue Exception => e
-              event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
-            end
-          end
-          break
         end
       }
     end
