@@ -166,7 +166,7 @@ class CommandrbBot
 
             args = event.message.content.split(' ')
             # Parse args if args exist !
-            if args[0].size != event.message.content.size
+            if args.length > 2
               spaces = 1
               # Prefixes with spaces are special and need to be parsed differently : )
               if prefix.include? " "
@@ -209,7 +209,6 @@ class CommandrbBot
                 end
               }
               end
-
 
             # All done here.
             @command = command
