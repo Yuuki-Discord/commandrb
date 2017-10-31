@@ -196,7 +196,7 @@ class CommandrbBot
 
             args = event.message.content.split(' ')
             # Parse args if args exist !
-            if args.length > 2
+            begin 
               spaces = 1
               # Prefixes with spaces are special and need to be parsed differently : )
               if prefix.include? " "
@@ -208,6 +208,8 @@ class CommandrbBot
               # Split the argmuents into an array for easy usage but keep the raw args !!
               rawargs = args
               args = args.split(/ /)
+            rescue NoMethodError # Not the most elegant solution but it'll do. TODO: Make a more elegant solution.
+              args = []
             end
 
 
