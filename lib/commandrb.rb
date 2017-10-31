@@ -1,4 +1,8 @@
+require_relative 'helper'
+
 class CommandrbBot
+  
+  ENV['COMMANDRB_MODE'] == 'debug' ? @debug_mode = true : @debug_mode = false
 
   # Be able to adjust the config on the fly.
   attr_accessor :config
@@ -41,7 +45,7 @@ class CommandrbBot
     @config[:delete_activators] = false if @config[:delete_activators].nil?
 
     if @config[:token].nil? or init_hash[:token] == ''
-      puts 'No token supplied in init hash!'
+      raise 'No token supplied in init hash!'
       return false
     end
 
@@ -50,12 +54,13 @@ class CommandrbBot
 
     if init_type == :bot
       if init_hash[:client_id].nil?
-        puts 'No client ID or invalid client ID supplied in init hash!'
+        raise 'No client ID or invalid client ID supplied in init hash!'
         return false
       end
     end
 
     @config[:owners] = init_hash[:owners]
+    @config[:owners] = [] if @config[:owners].nil?
 
     @prefixes = init_hash[:prefixes]
 
@@ -76,6 +81,7 @@ class CommandrbBot
 
     # Command processing
     @bot.message do |event|
+      @finished = false
       @command = nil
       @event = nil
       @chosen = nil
@@ -83,15 +89,20 @@ class CommandrbBot
       @rawargs = nil
       @continue = false
       @prefixes.each { |prefix|
+        break if @finished
         if event.message.content.start_with?(prefix)
 
           @commands.each { | key, command |
+            break if @finished
+            puts ":: Considering #{key.to_s}"  if @debug_mode
             triggers =  command[:triggers].nil? ? [key.to_s] : command[:triggers]
 
             triggers.each { |trigger|
               @activator = prefix + trigger.to_s
+              puts @activator if @debug_mode
               @activator = @activator.downcase
               if event.message.content.downcase.start_with?(@activator)
+                puts "Prefix matched! #{@activator}" if @debug_mode
 
                 # Continue only if you've already chosen a choice.
                 unless @chosen.nil?
@@ -99,20 +110,26 @@ class CommandrbBot
                   # Example: sh is chosen, shell is the new one.
                   # In this example, shell would override sh, preventing ugly bugs.
                   if @activator.start_with?(@chosen)
+                    puts "#{@activator} just overrode #{@chosen}" if @debug_mode
                     @chosen = @activator
                   # Otherwhise, just give up.
                   else
+                    puts "Match failed..." if @debug_mode
                     next
                   end
                 # If you haven't chosen yet, get choosing!
                 else
+                    puts "First match obtained!" if @debug_mode
                     @continue = true
                     @chosen = @activator
                 end
               end
             }
+            
+            puts "Result: #{@chosen}" if @debug_mode
 
-            next unless @continue
+            next if !@continue
+            puts "Final esult: #{@chosen}" if @debug_mode
 
             break if @config[:selfbot] && event.user.id != @bot.profile.id
 
@@ -125,9 +142,20 @@ class CommandrbBot
             command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
 
             # If the command is set to owners only and the user is not the owner, show error and abort.
+            puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode
+            puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode
             if command[:owners_only]
-              unless @config[:owners].include?(event.user.id)
-                event.respond('❌ You don\'t have permission for that!')
+              if !@config[:owners].include?(event.user.id)
+                event.channel.send_message('', false,
+                  Helper.error_embed(
+                   error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
+                   footer: "Command: `#{event.message.content}`",
+                   colour: 0xFA0E30,
+                   code_error: false
+                  )
+                )
+                puts 'Were returning!'
+                @finished = true
                 next
               end
             end
@@ -151,6 +179,7 @@ class CommandrbBot
                 event.respond('❌ This command will only work in servers!')
               end
               # Abort!
+              @finished = true
               next
             end
 
@@ -158,6 +187,7 @@ class CommandrbBot
             # ...then abort :3
             if (event.user.bot_account? && command[:parse_bots] == false) || (event.user.bot_account? && @config[:parse_bots] == false)
               # Abort!
+              @finished = true
               next
             end
 
@@ -182,12 +212,21 @@ class CommandrbBot
 
 
             # Check the number of args for the command.
-            if args.length > command[:max_args]
-              # May be replaced with an embed.
-              event.respond("❌ Too many arguments! \nMax arguments: `#{command[:max_args]}`")
-              next
+            unless command[:max_args].nil?
+              if command[:max_args] > 0 && args.length > command[:max_args]
+                # May be replaced with an embed.
+                event.channel.send_message('', false,
+                    Helper.error_embed(
+                     error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
+                     footer: "Command: `#{event.message.content}`",
+                     colour: 0xFA0E30,
+                     code_error: false
+                    )
+                  )
+                break
+              end
             end
-
+            
             # If the command is configured to catch all errors, thy shall be done.
             if !command[:catch_errors] || @config['catch_errors']
               # Run the command code!
@@ -203,18 +242,21 @@ class CommandrbBot
 
             unless command[:required_permissions].nil?
               command[:required_permissions].each { |x|
-                if event.user.on(event.server).permission?(:ban_members,event.channel)
+                if event.user.on(event.server).permission?(x,event.channel)
                   event.respond('❌ You don\'t have permission for that!')
-                  break
+                  @finished = true
+                  next
                 end
               }
               end
 
             # All done here.
+            puts "Finished!! Executed command: #{@chosen}" if @debug_mode
             @command = command
             @event = event
             @args = args
             @rawargs = rawargs
+            @finished = true
             break
           }
         end
