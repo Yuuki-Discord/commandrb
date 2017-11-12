@@ -225,32 +225,42 @@ class CommandrbBot
                      code_error: false
                     )
                   )
+                @finished = true
                 break
               end
             end
             
-            # If the command is configured to catch all errors, thy shall be done.
-            if !command[:catch_errors] || @config['catch_errors']
-              # Run the command code!
-              command[:code].call(event, args, rawargs)
-            else
-              # Run the command code, but catch all errors and output accordingly.
-              begin
-                command[:code].call(event, args, rawargs)
-              rescue Exception => e
-                event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
-              end
-            end
-
             unless command[:required_permissions].nil?
               command[:required_permissions].each { |x|
-                if event.user.on(event.server).permission?(x,event.channel)
-                  event.respond('❌ You don\'t have permission for that!')
+                unless event.user.on(event.server).permission?(x,event.channel)
+                  event.channel.send_message('', false,
+                    Helper.error_embed(
+                     error: "You don't have permission for that!\nPermission required: `#{x.to_s}`",
+                     footer: "Command: `#{event.message.content}`",
+                     colour: 0xFA0E30,
+                     code_error: false
+                    )
+                  )
                   @finished = true
-                  next
+                  break
                 end
               }
+            end
+            
+            unless @finished
+              # If the command is configured to catch all errors, thy shall be done.
+              if !command[:catch_errors] || @config['catch_errors']
+                # Run the command code!
+                command[:code].call(event, args, rawargs)
+              else
+                # Run the command code, but catch all errors and output accordingly.
+                begin
+                  command[:code].call(event, args, rawargs)
+                rescue Exception => e
+                  event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
+                end
               end
+            end
 
             # All done here.
             puts "Finished!! Executed command: #{@chosen}" if @debug_mode
