@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name        = 'commandrb'
-  s.version     = '0.4.2'
-  s.date        = '2017-11-12'
+  s.version     = '0.4.3'
+  s.date        = '2017-11-15'
   s.summary     = 'Commandrb'
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
   s.authors     = ['Erisa Komuro (Seriel)']
   s.email       = 'seriel@fl0.co'
-  s.files       = ['lib/commandrb.rb']
+  s.files       = ['lib/commandrb.rb', 'lib/helper.rb']
   s.required_ruby_version = '>= 2.1'
   s.homepage    =
       'https://github.com/Seriell/commandrb'
