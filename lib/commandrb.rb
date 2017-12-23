@@ -46,7 +46,6 @@ class CommandrbBot
 
     if @config[:token].nil? or init_hash[:token] == ''
       raise 'No token supplied in init hash!'
-      return false
     end
 
     init_parse_self = init_hash[:parse_self] rescue nil
@@ -55,7 +54,6 @@ class CommandrbBot
     if init_type == :bot
       if init_hash[:client_id].nil?
         raise 'No client ID or invalid client ID supplied in init hash!'
-        return false
       end
     end
 
@@ -105,31 +103,33 @@ class CommandrbBot
                 puts "Prefix matched! #{@activator}" if @debug_mode
 
                 # Continue only if you've already chosen a choice.
-                unless @chosen.nil?
+                if @chosen.nil?
+                  puts "First match obtained!" if @debug_mode
+                  @continue = true
+                  @chosen = @activator
+                else
                   # If the new activator begins with the chosen one, then override it.
                   # Example: sh is chosen, shell is the new one.
                   # In this example, shell would override sh, preventing ugly bugs.
                   if @activator.start_with?(@chosen)
                     puts "#{@activator} just overrode #{@chosen}" if @debug_mode
                     @chosen = @activator
-                  # Otherwhise, just give up.
+                    # Otherwhise, just give up.
                   else
                     puts "Match failed..." if @debug_mode
                     next
                   end
-                # If you haven't chosen yet, get choosing!
-                else
-                    puts "First match obtained!" if @debug_mode
-                    @continue = true
-                    @chosen = @activator
+                  # If you haven't chosen yet, get choosing!
                 end
               end
             }
             
             puts "Result: #{@chosen}" if @debug_mode
 
-            next if !@continue
-            puts "Final esult: #{@chosen}" if @debug_mode
+            unless @continue
+              next
+            end
+            puts "Final result: #{@chosen}" if @debug_mode
 
             break if @config[:selfbot] && event.user.id != @bot.profile.id
 
@@ -140,19 +140,20 @@ class CommandrbBot
             command[:server_only] = false if command[:server_only].nil?
             command[:typing] = @config[:typing_default] if command[:typing_default].nil?
             command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
+            command[:owner_override] = false if command[:owner_override].nil?
 
             # If the command is set to owners only and the user is not the owner, show error and abort.
             puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode
             puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode
             if command[:owners_only]
-              if !@config[:owners].include?(event.user.id)
+              unless @config[:owners].include?(event.user.id)
                 event.channel.send_message('', false,
-                  Helper.error_embed(
-                   error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
-                   footer: "Command: `#{event.message.content}`",
-                   colour: 0xFA0E30,
-                   code_error: false
-                  )
+                                           Helper.error_embed(
+                                               error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
+                                               footer: "Command: `#{event.message.content}`",
+                                               colour: 0xFA0E30,
+                                               code_error: false
+                                           )
                 )
                 puts 'Were returning!'
                 @finished = true
@@ -216,7 +217,6 @@ class CommandrbBot
             # Check the number of args for the command.
             unless command[:max_args].nil?
               if command[:max_args] > 0 && args.length > command[:max_args]
-                # May be replaced with an embed.
                 event.channel.send_message('', false,
                     Helper.error_embed(
                      error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
@@ -232,7 +232,7 @@ class CommandrbBot
             
             unless command[:required_permissions].nil?
               command[:required_permissions].each { |x|
-                unless event.user.on(event.server).permission?(x,event.channel)
+                unless event.user.on(event.server).permission?(x,event.channel) || (command[:owner_override] && @config[:owners].include?(event.user.id) )
                   event.channel.send_message('', false,
                     Helper.error_embed(
                      error: "You don't have permission for that!\nPermission required: `#{x.to_s}`",
@@ -246,7 +246,7 @@ class CommandrbBot
                 end
               }
             end
-            
+
             unless @finished
               # If the command is configured to catch all errors, thy shall be done.
               if !command[:catch_errors] || @config['catch_errors']
