@@ -141,6 +141,7 @@ class CommandrbBot
             command[:catch_errors] = @config[:catch_errors] if command[:catch_errors].nil?
             command[:owners_only] = false if command[:owners_only].nil?
             command[:max_args] = 2000 if command[:max_args].nil?
+            command[:min_args] = 0 if command[:min_args].nil?
             command[:server_only] = false if command[:server_only].nil?
             command[:typing] = @config[:typing_default] if command[:typing_default].nil?
             command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
@@ -229,6 +230,22 @@ class CommandrbBot
                      code_error: false
                     )
                   )
+                @finished = true
+                break
+              end
+            end
+
+            # Check the number of args for the command.
+            unless command[:min_args].nil?
+              if command[:min_args] > 0 && args.length < command[:min_args]
+                event.channel.send_message('', false,
+                   Helper.error_embed(
+                       error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
+                       footer: "Command: `#{event.message.content}`",
+                       colour: 0xFA0E30,
+                       code_error: false
+                   )
+                )
                 @finished = true
                 break
               end

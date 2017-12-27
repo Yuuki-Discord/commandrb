@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'commandrb'
-  s.version     = '0.4.5'
+  s.version     = '0.4.6'
   s.date        = '2017-12-23'
   s.summary     = 'Commandrb'
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
