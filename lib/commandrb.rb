@@ -16,7 +16,6 @@ class CommandrbBot
   # Lets you change global prefixes while the bot is running (Not recommended!)
   attr_accessor :prefixes
 
-
   def add_command(name, attributes = {})
     @commands[name.to_sym] = attributes
   end
@@ -30,8 +29,13 @@ class CommandrbBot
     true
   end
 
-  def initialize(init_hash)
+  # By defining this seperately. we allow you to overwrite it and use your own owner list.
+  # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
+  def is_owner?(id)
+    @config[:owners].include?(id)
+  end
 
+  def initialize(init_hash)
     # Setup the variables for first use.
     @commands = {}
     @prefixes = []
@@ -146,14 +150,14 @@ class CommandrbBot
             puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode
             puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode
             if command[:owners_only]
-              unless @config[:owners].include?(event.user.id)
+              unless self.is_owner?(event.user.id)
                 event.channel.send_message('', false,
-                                           Helper.error_embed(
-                                               error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
-                                               footer: "Command: `#{event.message.content}`",
-                                               colour: 0xFA0E30,
-                                               code_error: false
-                                           )
+                   Helper.error_embed(
+                       error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
+                       footer: "Command: `#{event.message.content}`",
+                       colour: 0xFA0E30,
+                       code_error: false
+                   )
                 )
                 puts 'Were returning!'
                 @finished = true
