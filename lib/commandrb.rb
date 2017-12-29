@@ -152,17 +152,14 @@ class CommandrbBot
             puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode
             if command[:owners_only]
               unless self.is_owner?(event.user.id)
-                event.channel.send_message('', false,
-                   Helper.error_embed(
+                @send_error = Helper.error_embed(
                        error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
                        footer: "Command: `#{event.message.content}`",
                        colour: 0xFA0E30,
                        code_error: false
                    )
-                )
-                puts 'Were returning!'
-                @finished = true
-                next
+                @failed = true
+                #next
               end
             end
 
@@ -171,23 +168,26 @@ class CommandrbBot
             event.message.delete if command[:delete_activator]
 
             # If the command is only for use in servers, display error and abort.
-            if command[:server_only] && event.channel.private?
-              # For selfbots, a fancy embed will be used. WIP.
-              if @config[:selfbot]
-                event.channel.send_embed do |embed|
-                  embed.colour = 0x221461
-                  embed.title = '❌ An error has occured!'
-                  embed.description = 'This command can only be used in servers!'
-                  embed.footer = Discordrb::Webhooks::EmbedFooter.new(text: "Command: '#{event.message.content}'")
+            unless @failed
+              if (command[:server_only] && event.channel.private?)
+                # For selfbots, a fancy embed will be used. WIP.
+                if @config[:selfbot]
+                  event.channel.send_embed do |embed|
+                    embed.colour = 0x221461
+                    embed.title = '❌ An error has occured!'
+                    embed.description = 'This command can only be used in servers!'
+                    embed.footer = Discordrb::Webhooks::EmbedFooter.new(text: "Command: '#{event.message.content}'")
+                  end
+                else
+                  # If its not a selfbot, an ordinary message will be shown, may be changed to embed later.
+                  event.respond('❌ This command will only work in servers!')
                 end
-              else
-                # If its not a selfbot, an ordinary message will be shown, may be changed to embed later.
-                event.respond('❌ This command will only work in servers!')
+                # Abort!
+                @finished = true
+                next
               end
-              # Abort!
-              @finished = true
-              next
             end
+
 
             # If the user is a bot and the command is set to not pass bots OR the user is a bot and the global config is to not parse bots...
             # ...then abort :3
@@ -220,50 +220,41 @@ class CommandrbBot
 
 
             # Check the number of args for the command.
-            unless command[:max_args].nil?
+            unless command[:max_args].nil? || @failed
               if command[:max_args] > 0 && args.length > command[:max_args]
-                event.channel.send_message('', false,
-                    Helper.error_embed(
-                     error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
-                     footer: "Command: `#{event.message.content}`",
-                     colour: 0xFA0E30,
-                     code_error: false
-                    )
-                  )
-                @finished = true
-                break
+                @send_error = Helper.error_embed(
+                   error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
+                   footer: "Command: `#{event.message.content}`",
+                   colour: 0xFA0E30,
+                   code_error: false
+                )
+                @failed = true
               end
             end
 
             # Check the number of args for the command.
-            unless command[:min_args].nil?
+            unless command[:min_args].nil? || @failed
               if command[:min_args] > 0 && args.length < command[:min_args]
-                event.channel.send_message('', false,
-                   Helper.error_embed(
-                       error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
-                       footer: "Command: `#{event.message.content}`",
-                       colour: 0xFA0E30,
-                       code_error: false
-                   )
+                @send_error = Helper.error_embed(
+                   error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
+                   footer: "Command: `#{event.message.content}`",
+                   colour: 0xFA0E30,
+                   code_error: false
                 )
-                @finished = true
-                break
+                @failed = true
               end
             end
             
-            unless command[:required_permissions].nil?
+            unless command[:required_permissions].nil? || @failed
               command[:required_permissions].each { |x|
                 unless event.user.on(event.server).permission?(x,event.channel) || (command[:owner_override] && @config[:owners].include?(event.user.id) )
-                  event.channel.send_message('', false,
-                    Helper.error_embed(
+                  @send_error = Helper.error_embed(
                      error: "You don't have permission for that!\nPermission required: `#{x.to_s}`",
                      footer: "Command: `#{event.message.content}`",
                      colour: 0xFA0E30,
                      code_error: false
-                    )
                   )
-                  @finished = true
-                  break
+                  @failed = true
                 end
               }
             end
@@ -272,11 +263,27 @@ class CommandrbBot
               # If the command is configured to catch all errors, thy shall be done.
               if !command[:catch_errors] || @config['catch_errors']
                 # Run the command code!
-                command[:code].call(event, args, rawargs)
+                if @failed
+                  if command[:failcode].nil?
+                    if @send_error.nil?
+                      event.respond(":x: An unknown error has occured!")
+                    else
+                      event.respond('', false, @send_error)
+                    end
+                  else
+                    command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
+                  end
+                else
+                  command[:code].call(event, args, rawargs)
+                end
               else
                 # Run the command code, but catch all errors and output accordingly.
                 begin
-                  command[:code].call(event, args, rawargs)
+                  if @failed
+                    command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
+                  else
+                    command[:code].call(event, args, rawargs)
+                  end
                 rescue Exception => e
                   event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
                 end
@@ -285,6 +292,7 @@ class CommandrbBot
 
             # All done here.
             puts "Finished!! Executed command: #{@chosen}" if @debug_mode
+            @failed = false
             @command = command
             @event = event
             @args = args
