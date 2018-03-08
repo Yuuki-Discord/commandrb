@@ -1,7 +1,7 @@
 
 
 # [Discontinued] Commandrb
-Commandrb has been adandoned in favour of making Yuuki-Bot's command system from scratch and specifically designed and integrated with the rest of the Yuuki-Bot codebase. This change was made to allow easy customisation of Yuuki's commands without the need to support 
+Commandrb has been adandoned in favour of making Yuuki-Bot's command system from scratch and specifically designed and integrated with the rest of the Yuuki-Bot codebase. This change was made to allow easy customisation of Yuuki's commands without the need to support a whole seperate Ruby gem and all its many use-cases.
 
 OLD README:
 
