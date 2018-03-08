@@ -3,10 +3,12 @@
 # [Discontinued] Commandrb
 Commandrb has been adandoned in favour of making Yuuki-Bot's command system from scratch and specifically designed and integrated with the rest of the Yuuki-Bot codebase. This change was made to allow easy customisation of Yuuki's commands without the need to support 
 
+OLD README:
+
 <hr>
-~~A customisable and (probably) easy to use commands system for discordrb
+A customisable and (probably) easy to use commands system for discordrb
 It's probably not recommended to use this in it's early stages (< 1.0) because it will be riddled with bugs and features that don't work as intended.
-However, feel free to use it if you want, just don't be surprised when it doesn't work exactly the way you want it to. (If you find an issue feel free to report it, just don't act all entitled, you were warned.)~~
+However, feel free to use it if you want, just don't be surprised when it doesn't work exactly the way you want it to. (If you find an issue feel free to report it, just don't act all entitled, you were warned.)
 
 # Creating a bot with Commandrb
 
