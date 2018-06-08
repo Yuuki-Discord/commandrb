@@ -85,7 +85,6 @@ class CommandrbBot
     @bot.message do |event|
       finished = false
       command = nil
-      event = nil
       chosen = nil
       args = nil
       rawargs = nil
