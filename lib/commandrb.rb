@@ -151,7 +151,7 @@ class CommandrbBot
             puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode
             if command[:owners_only]
               unless self.is_owner?(event.user.id)
-                @send_error = Helper.error_embed(
+                send_error = Helper.error_embed(
                        error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
                        footer: "Command: `#{event.message.content}`",
                        colour: 0xFA0E30,
@@ -221,7 +221,7 @@ class CommandrbBot
             # Check the number of args for the command.
             unless command[:max_args].nil? || failed
               if command[:max_args] > 0 && args.length > command[:max_args]
-                @send_error = Helper.error_embed(
+                send_error = Helper.error_embed(
                    error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
                    footer: "Command: `#{event.message.content}`",
                    colour: 0xFA0E30,
@@ -234,7 +234,7 @@ class CommandrbBot
             # Check the number of args for the command.
             unless command[:min_args].nil? || failed
               if command[:min_args] > 0 && args.length < command[:min_args]
-                @send_error = Helper.error_embed(
+                send_error = Helper.error_embed(
                    error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
                    footer: "Command: `#{event.message.content}`",
                    colour: 0xFA0E30,
@@ -247,7 +247,7 @@ class CommandrbBot
             unless command[:required_permissions].nil? || failed
               command[:required_permissions].each { |x|
                 unless event.user.on(event.server).permission?(x,event.channel) || (command[:owner_override] && @config[:owners].include?(event.user.id) )
-                  @send_error = Helper.error_embed(
+                  send_error = Helper.error_embed(
                      error: "You don't have permission for that!\nPermission required: `#{x.to_s}`",
                      footer: "Command: `#{event.message.content}`",
                      colour: 0xFA0E30,
@@ -264,10 +264,10 @@ class CommandrbBot
                 # Run the command code!
                 if failed
                   if command[:failcode].nil?
-                    if @send_error.nil?
+                    if send_error.nil?
                       event.respond(":x: An unknown error has occured!")
                     else
-                      event.channel.send_message('', false, @send_error)
+                      event.channel.send_message('', false, send_error)
                     end
                   else
                     command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
