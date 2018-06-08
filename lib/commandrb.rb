@@ -17,12 +17,12 @@ class CommandrbBot
   attr_accessor :prefixes
 
   def add_command(name, attributes = {})
-    commands[name.to_sym] = attributes
+    @commands[name.to_sym] = attributes
   end
 
   def remove_command(name)
     begin
-      commands.delete(name)
+      @commands.delete(name)
     rescue
       return false
     end
@@ -37,7 +37,7 @@ class CommandrbBot
 
   def initialize(init_hash)
     # Setup the variables for first use.
-    commands = {}
+    @commands = {}
     @prefixes = []
     @config = init_hash
 
@@ -94,7 +94,7 @@ class CommandrbBot
         break if finished
         if event.message.content.start_with?(prefix)
 
-          commands.each { | key, command |
+          @commands.each { | key, command |
             break if finished
             puts ":: Considering #{key.to_s}"  if @debug_mode
             triggers =  command[:triggers].nil? ? [key.to_s] : command[:triggers]
