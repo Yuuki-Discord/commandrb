@@ -267,7 +267,7 @@ class CommandrbBot
                     if @send_error.nil?
                       event.respond(":x: An unknown error has occured!")
                     else
-                      event.respond('', false, @send_error)
+                      event.channel.send_message('', false, @send_error)
                     end
                   else
                     command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
