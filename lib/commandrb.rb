@@ -3,7 +3,7 @@ require_relative 'helper'
 class CommandrbBot
   
   ENV['COMMANDRB_MODE'] == 'debug' ? @debug_mode = true : @debug_mode = false
-
+	@debug_mode = true
   # Be able to adjust the config on the fly.
   attr_accessor :config
 
@@ -31,7 +31,7 @@ class CommandrbBot
 
   # By defining this seperately. we allow you to overwrite it and use your own owner list.
   # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
-  def is_owner?(id)
+  def self.is_owner?(id)
     @config[:owners].include?(id)
   end
 
@@ -40,6 +40,7 @@ class CommandrbBot
     @commands = {}
     @prefixes = []
     @config = init_hash
+	p @config
 
     # Load sane defaults for options that aren't specified.
 
@@ -83,44 +84,44 @@ class CommandrbBot
 
     # Command processing
     @bot.message do |event|
-      @finished = false
-      @command = nil
-      @event = nil
-      @chosen = nil
-      @args = nil
-      @rawargs = nil
-      @continue = false
+      finished = false
+      command = nil
+      chosen = nil
+      args = nil
+      rawargs = nil
+      continue = false
+	  failed = false
       @prefixes.each { |prefix|
-        break if @finished
+        break if finished
         if event.message.content.start_with?(prefix)
 
           @commands.each { | key, command |
-            break if @finished
-            puts ":: Considering #{key.to_s}"  if @debug_mode
+            break if finished
+            puts ":: Considering #{key.to_s}"  if true
             triggers =  command[:triggers].nil? ? [key.to_s] : command[:triggers]
 
             triggers.each { |trigger|
-              @activator = prefix + trigger.to_s
-              puts @activator if @debug_mode
-              @activator = @activator.downcase
-              if event.message.content.downcase.start_with?(@activator)
-                puts "Prefix matched! #{@activator}" if @debug_mode
+              activator = prefix + trigger.to_s
+              puts activator if true
+              activator = activator.downcase
+              if event.message.content.downcase.start_with?(activator)
+                puts "Prefix matched! #{activator}" if true
 
                 # Continue only if you've already chosen a choice.
-                if @chosen.nil?
-                  puts "First match obtained!" if @debug_mode
-                  @continue = true
-                  @chosen = @activator
+                if chosen.nil?
+                  puts "First match obtained!" if true
+                  continue = true
+                  chosen = activator
                 else
                   # If the new activator begins with the chosen one, then override it.
                   # Example: sh is chosen, shell is the new one.
                   # In this example, shell would override sh, preventing ugly bugs.
-                  if @activator.start_with?(@chosen)
-                    puts "#{@activator} just overrode #{@chosen}" if @debug_mode
-                    @chosen = @activator
+                  if activator.start_with?(chosen)
+                    puts "#{activator} just overrode #{chosen}" if true
+                    chosen = activator
                     # Otherwhise, just give up.
                   else
-                    puts "Match failed..." if @debug_mode
+                    puts "Match failed..." if true
                     next
                   end
                   # If you haven't chosen yet, get choosing!
@@ -128,12 +129,12 @@ class CommandrbBot
               end
             }
             
-            puts "Result: #{@chosen}" if @debug_mode
+            puts "Result: #{chosen}" if true
 
-            unless @continue
+            unless continue
               next
             end
-            puts "Final result: #{@chosen}" if @debug_mode
+            puts "Final result: #{chosen}" if true
 
             break if @config[:selfbot] && event.user.id != @bot.profile.id
 
@@ -147,28 +148,13 @@ class CommandrbBot
             command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
             command[:owner_override] = false if command[:owner_override].nil?
 
-            # If the command is set to owners only and the user is not the owner, show error and abort.
-            puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode
-            puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode
-            if command[:owners_only]
-              unless self.is_owner?(event.user.id)
-                @send_error = Helper.error_embed(
-                       error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
-                       footer: "Command: `#{event.message.content}`",
-                       colour: 0xFA0E30,
-                       code_error: false
-                   )
-                @failed = true
-                #next
-              end
-            end
 
             # If the settings are to delete activating messages, then do that.
             # I'm *hoping* this doesn't cause issues with argument extraction.
             event.message.delete if command[:delete_activator]
 
             # If the command is only for use in servers, display error and abort.
-            unless @failed
+            unless failed
               if (command[:server_only] && event.channel.private?)
                 # For selfbots, a fancy embed will be used. WIP.
                 if @config[:selfbot]
@@ -183,7 +169,7 @@ class CommandrbBot
                   event.respond('❌ This command will only work in servers!')
                 end
                 # Abort!
-                @finished = true
+                finished = true
                 next
               end
             end
@@ -193,7 +179,7 @@ class CommandrbBot
             # ...then abort :3
             if (event.user.bot_account? && command[:parse_bots] == false) || (event.user.bot_account? && @config[:parse_bots] == false)
               # Abort!
-              @finished = true
+              finished = true
               next
             end
 
@@ -220,55 +206,73 @@ class CommandrbBot
 
 
             # Check the number of args for the command.
-            unless command[:max_args].nil? || @failed
+            unless command[:max_args].nil? || failed
               if command[:max_args] > 0 && args.length > command[:max_args]
-                @send_error = Helper.error_embed(
+                send_error = Helper.error_embed(
                    error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
                    footer: "Command: `#{event.message.content}`",
                    colour: 0xFA0E30,
                    code_error: false
                 )
-                @failed = true
+                failed = true
               end
             end
 
             # Check the number of args for the command.
-            unless command[:min_args].nil? || @failed
+            unless command[:min_args].nil? || failed
               if command[:min_args] > 0 && args.length < command[:min_args]
-                @send_error = Helper.error_embed(
+                send_error = Helper.error_embed(
                    error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
                    footer: "Command: `#{event.message.content}`",
                    colour: 0xFA0E30,
                    code_error: false
                 )
-                @failed = true
+                failed = true
               end
             end
             
-            unless command[:required_permissions].nil? || @failed
+            unless command[:required_permissions].nil? || failed
               command[:required_permissions].each { |x|
                 unless event.user.on(event.server).permission?(x,event.channel) || (command[:owner_override] && @config[:owners].include?(event.user.id) )
-                  @send_error = Helper.error_embed(
+                  send_error = Helper.error_embed(
                      error: "You don't have permission for that!\nPermission required: `#{x.to_s}`",
                      footer: "Command: `#{event.message.content}`",
                      colour: 0xFA0E30,
                      code_error: false
                   )
-                  @failed = true
+                  failed = true
                 end
               }
             end
+			
+			            # If the command is set to owners only and the user is not the owner, show error and abort.
+            puts "[DEBUG] Command being processed: '#{command}'" if true
+            puts "[DEBUG] Owners only? #{command[:owners_only]}" if true
+            if command[:owners_only]
+              unless self.is_owner?(event.user.id)
+			  
+                send_error = Helper.error_embed(
+                       error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
+                       footer: "Command: `#{event.message.content}`",
+                       colour: 0xFA0E30,
+                       code_error: false
+                   )
+                failed = true
+                #next
+              end
+            end
 
-            unless @finished
+
+            unless finished
               # If the command is configured to catch all errors, thy shall be done.
-              if !command[:catch_errors] || @config['catch_errors']
+              #if !command[:catch_errors] || @config['catch_errors']
                 # Run the command code!
-                if @failed
+                if failed
                   if command[:failcode].nil?
-                    if @send_error.nil?
+                    if send_error.nil?
                       event.respond(":x: An unknown error has occured!")
                     else
-                      event.respond('', false, @send_error)
+                      event.channel.send_message('', false, send_error)
                     end
                   else
                     command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
@@ -276,28 +280,28 @@ class CommandrbBot
                 else
                   command[:code].call(event, args, rawargs)
                 end
-              else
-                # Run the command code, but catch all errors and output accordingly.
-                begin
-                  if @failed
-                    command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
-                  else
-                    command[:code].call(event, args, rawargs)
-                  end
-                rescue Exception => e
-                  event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
-                end
-              end
+              #else
+              #  # Run the command code, but catch all errors and output accordingly.
+              #  begin
+              #    if failed
+              #      command[:failcode].call(event, args, rawargs) unless command[:failcode].nil?
+              #    else
+              #      command[:code].call(event, args, rawargs)
+              #    end
+              #  rescue Exception => e
+              #    event.respond("❌ An error has occured!! ```ruby\n#{e}```Please contact the bot owner with the above message for assistance.")
+              #  end
+              #end
             end
 
             # All done here.
-            puts "Finished!! Executed command: #{@chosen}" if @debug_mode
-            @failed = false
-            @command = command
-            @event = event
-            @args = args
-            @rawargs = rawargs
-            @finished = true
+            puts "Finished!! Executed command: #{chosen}" if true
+            failed = false
+            command = command
+            event = event
+            args = args
+            rawargs = rawargs
+            finished = true
             break
           }
         end
