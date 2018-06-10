@@ -97,19 +97,19 @@ class CommandrbBot
 
           @commands.each { | key, command |
             break if finished
-            puts ":: Considering #{key.to_s}"  if true
+            puts ":: Considering #{key.to_s}"  if @debug_mode == true
             triggers =  command[:triggers].nil? ? [key.to_s] : command[:triggers]
 
             triggers.each { |trigger|
               activator = prefix + trigger.to_s
-              puts activator if true
+              puts activator if @debug_mode == true
               activator = activator.downcase
               if event.message.content.downcase.start_with?(activator)
-                puts "Prefix matched! #{activator}" if true
+                puts "Prefix matched! #{activator}" if @debug_mode == true
 
                 # Continue only if you've already chosen a choice.
                 if chosen.nil?
-                  puts "First match obtained!" if true
+                  puts "First match obtained!" if @debug_mode == true
                   continue = true
                   chosen = activator
                 else
@@ -117,11 +117,11 @@ class CommandrbBot
                   # Example: sh is chosen, shell is the new one.
                   # In this example, shell would override sh, preventing ugly bugs.
                   if activator.start_with?(chosen)
-                    puts "#{activator} just overrode #{chosen}" if true
+                    puts "#{activator} just overrode #{chosen}" if @debug_mode == true
                     chosen = activator
                     # Otherwhise, just give up.
                   else
-                    puts "Match failed..." if true
+                    puts "Match failed..." if @debug_mode == true
                     next
                   end
                   # If you haven't chosen yet, get choosing!
@@ -129,12 +129,12 @@ class CommandrbBot
               end
             }
             
-            puts "Result: #{chosen}" if true
+            puts "Result: #{chosen}" if @debug_mode == true
 
             unless continue
               next
             end
-            puts "Final result: #{chosen}" if true
+            puts "Final result: #{chosen}" if @debug_mode == true
 
             break if @config[:selfbot] && event.user.id != @bot.profile.id
 
@@ -246,8 +246,8 @@ class CommandrbBot
             end
 			
 			            # If the command is set to owners only and the user is not the owner, show error and abort.
-            puts "[DEBUG] Command being processed: '#{command}'" if true
-            puts "[DEBUG] Owners only? #{command[:owners_only]}" if true
+            puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode == true
+            puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode == true
             if command[:owners_only]
               unless self.is_owner?(event.user.id)
 			  
@@ -295,7 +295,7 @@ class CommandrbBot
             end
 
             # All done here.
-            puts "Finished!! Executed command: #{chosen}" if true
+            puts "Finished!! Executed command: #{chosen}" if @debug_mode == true
             failed = false
             command = command
             event = event
