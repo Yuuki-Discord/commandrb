@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'commandrb'
-  s.version     = '0.4.7.1'
-  s.date        = '2018-06-08'
+  s.version     = '0.4.7.2'
+  s.date        = '2018-06-10'
   s.summary     = 'Commandrb'
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
   s.authors     = ['Erisa Arrowsmith (Seriel)']
