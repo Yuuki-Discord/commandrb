@@ -40,7 +40,6 @@ class CommandrbBot
     @commands = {}
     @prefixes = []
     @config = init_hash
-	p @config
 
     # Load sane defaults for options that aren't specified.
 
