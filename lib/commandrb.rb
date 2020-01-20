@@ -31,9 +31,11 @@ class CommandrbBot
 
   # By defining this seperately. we allow you to overwrite it and use your own owner list.
   # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
-  def self.is_owner?(id)
+  def owner?(id)
     @config[:owners].include?(id)
   end
+
+  alias :is_owner? :owner?
 
   def initialize(init_hash)
     # Setup the variables for first use.
