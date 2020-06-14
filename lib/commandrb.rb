@@ -250,7 +250,7 @@ class CommandrbBot
             puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode == true
             puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode == true
             if command[:owners_only]
-              unless self.is_owner?(event.user.id)
+              unless self.owner?(event.user.id)
 			  
                 send_error = Helper.error_embed(
                        error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
