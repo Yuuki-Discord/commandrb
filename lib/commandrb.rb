@@ -147,7 +147,9 @@ class CommandrbBot
           command[:min_args] = 0 if command[:min_args].nil?
           command[:server_only] = false if command[:server_only].nil?
           command[:typing] = @config[:typing_default] if command[:typing_default].nil?
-          command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
+          if command[:delete_activator].nil?
+            command[:delete_activator] = @config[:delete_activators]
+          end
           command[:owner_override] = false if command[:owner_override].nil?
 
           # If the settings are to delete activating messages, then do that.
