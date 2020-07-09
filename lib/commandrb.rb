@@ -86,7 +86,6 @@ class CommandrbBot
     # Command processing
     @bot.message do |event|
       finished = false
-      command = nil
       chosen = nil
       args = nil
       rawargs = nil
@@ -280,7 +279,7 @@ class CommandrbBot
               end
             else
               command[:code].call(event, args, rawargs)
-              end
+            end
           end
 
           # All done here.
