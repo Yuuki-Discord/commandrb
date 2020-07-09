@@ -3,10 +3,10 @@
 Gem::Specification.new do |s|
   s.name        = 'commandrb'
   s.version     = '0.4.8.0'
-  s.date        = '2020-07-05'
+  s.date        = '2020-07-09'
   s.summary     = 'Commandrb'
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
-  s.authors     = ['Erisa A (Seriel)']
+  s.authors     = ['Erisa A']
   s.email       = 'seriel@erisa.moe'
   s.files       = ['lib/commandrb.rb', 'lib/helper.rb']
   s.required_ruby_version = '>= 2.4'
