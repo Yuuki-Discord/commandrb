@@ -7,7 +7,7 @@ However, feel free to use it if you want, just don't be surprised when it doesn'
 # Creating a bot with Commandrb
 
 ## Requirements
-- Ruby 2.3+ (2.5+ is recommended)
+- Ruby 2.4+ (2.6+ is recommended)
 - [discordrb](https://github.com/discordrb/discordrb) 3.0+
 
 ## Install
