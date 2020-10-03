@@ -2,7 +2,13 @@
 
 class CommandrbBot
   module Helper
-    def self.error_embed(error: nil, footer: nil, colour: nil, color: nil, code_error: true)
+    def self.error_embed(
+      error: nil,
+      footer: nil,
+      colour: nil,
+      color: nil,
+      code_error: true
+    )
       raise 'Invalid arguments for Helper.error_embed!' if error.nil? || footer.nil?
 
       colour = 0x22ef1f if color.nil? && colour.nil?
@@ -14,7 +20,12 @@ class CommandrbBot
       )
     end
 
-    def self.avatar_embed(color: nil, colour: nil, url: nil, username: nil, time: Time.now.getutc.asctime)
+    def self.avatar_embed(
+      color: nil,
+      colour: nil,
+      url: nil, username: nil,
+      time: Time.now.getutc.asctime
+    )
       raise 'Invalid arguments for Helper.avatar_embed!' if url.nil?
 
       colour = 0x22ef1f if color.nil? && colour.nil?
