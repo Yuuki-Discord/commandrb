@@ -207,7 +207,7 @@ class CommandrbBot
 
           # Check the number of args for the command.
           unless command[:max_args].nil? || failed
-            if command[:max_args] > 0 && args.length > command[:max_args]
+            if (command[:max_args]).positive? && args.length > command[:max_args]
               send_error = Helper.error_embed(
                 error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
                 footer: "Command: `#{event.message.content}`",
@@ -220,7 +220,7 @@ class CommandrbBot
 
           # Check the number of args for the command.
           unless command[:min_args].nil? || failed
-            if command[:min_args] > 0 && args.length < command[:min_args]
+            if (command[:min_args]).positive? && args.length < command[:min_args]
               send_error = Helper.error_embed(
                 error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
                 footer: "Command: `#{event.message.content}`",
