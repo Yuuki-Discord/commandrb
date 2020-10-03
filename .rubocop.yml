@@ -10,13 +10,16 @@ Metrics/MethodLength:
 Metrics/ModuleLength:
   Enabled: false
 
+Metrics/ClassLength:
+  Enabled: false
+
+# TEMPORARY
+Metrics/BlockNesting:
+  Enabled: false
+
 Style/Documentation:
   Enabled: false
  
-Security/Eval:
-  Exclude:
-    - "modules/owner/eval.rb"
-
 Lint/Debugger:
   Exclude:
     - "run.rb"
@@ -25,17 +28,7 @@ Layout/EndOfLine:
   EnforcedStyle: lf
 
 Layout/LineLength:
-  Exclude:
-    - "config/custom/custom.sample.rb"
   Max: 100
-
-Style/GlobalVars:
-  Exclude:
-    - "run.rb"
-
-Security/Open:
-  Exclude:
-    - "modules/helper/download.rb"
 
 # Keep to syntactic linting, instead of complexity.
 Metrics/CyclomaticComplexity:

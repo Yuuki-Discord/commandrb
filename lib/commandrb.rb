@@ -115,18 +115,17 @@ class CommandrbBot
               puts 'First match obtained!' if @debug_mode == true
               continue = true
               chosen = activator
-            else
+
               # If the new activator begins with the chosen one, then override it.
               # Example: sh is chosen, shell is the new one.
               # In this example, shell would override sh, preventing ugly bugs.
-              if activator.start_with?(chosen)
-                puts "#{activator} just overrode #{chosen}" if @debug_mode == true
-                chosen = activator
-                # Otherwhise, just give up.
-              else
-                puts 'Match failed...' if @debug_mode == true
-                next
-              end
+            elsif activator.start_with?(chosen)
+              puts "#{activator} just overrode #{chosen}" if @debug_mode == true
+              chosen = activator
+            # Otherwhise, just give up.
+            else
+              puts 'Match failed...' if @debug_mode == true
+              next
               # If you haven't chosen yet, get choosing!
             end
           end
@@ -164,10 +163,13 @@ class CommandrbBot
                   embed.colour = 0x221461
                   embed.title = '❌ An error has occured!'
                   embed.description = 'This command can only be used in servers!'
-                  embed.footer = Discordrb::Webhooks::EmbedFooter.new(text: "Command: '#{event.message.content}'")
+                  embed.footer = Discordrb::Webhooks::EmbedFooter.new(
+                    text: "Command:'#{event.message.content}'"
+                  )
                 end
               else
-                # If its not a selfbot, an ordinary message will be shown, may be changed to embed later.
+                # If its not a selfbot, an ordinary message will be shown,
+                #   may be changed to embed later.
                 event.respond('❌ This command will only work in servers!')
               end
               # Abort!
@@ -176,9 +178,13 @@ class CommandrbBot
             end
           end
 
-          # If the user is a bot and the command is set to not pass bots OR the user is a bot and the global config is to not parse bots...
+          # If the user is a bot and the command is set to not pass bots
+          #   OR the user is a botand the global config is to not parse bots...
           # ...then abort :3
-          if (event.user.bot_account? && command[:parse_bots] == false) || (event.user.bot_account? && @config[:parse_bots] == false)
+          if (
+            event.user.bot_account? && command[:parse_bots] == false) \
+            || (event.user.bot_account? && @config[:parse_bots] == false
+               )
             # Abort!
             finished = true
             next
@@ -194,14 +200,19 @@ class CommandrbBot
             # Prefixes with spaces are special and need to be parsed differently : )
             if prefix.include? ' '
               spaces += prefix.count(' ')
-              args = event.message.content.slice!(args[0].size + args[1].size + spaces, event.message.content.size)
+              args = event.message.content.slice!(
+                args[0].size + args[1].size + spaces,
+                event.message.content.size
+              )
             else
               args = event.message.content.slice!(args[0].size + spaces, event.message.content.size)
             end
             # Split the argmuents into an array for easy usage but keep the raw args !!
             rawargs = args
             args = args.split(/ /)
-          rescue NoMethodError # Not the most elegant solution but it'll do. TODO: Make a more elegant solution.
+          # Not the most elegant solution but it'll do.
+          # TODO: Make a more elegant solution.
+          rescue NoMethodError
             args = []
           end
 
@@ -233,7 +244,8 @@ class CommandrbBot
 
           unless command[:required_permissions].nil? || failed
             command[:required_permissions].each do |x|
-              if event.user.on(event.server).permission?(x, event.channel) || (command[:owner_override] && @config[:owners].include?(event.user.id))
+              if event.user.on(event.server).permission?(x, event.channel) \
+                || (command[:owner_override] && @config[:owners].include?(event.user.id))
                 next
               end
 
@@ -247,14 +259,16 @@ class CommandrbBot
             end
           end
 
-          # If the command is set to owners only and the user is not the owner, show error and abort.
+          # If the command is set to owners only and the user is not the owner,
+          #   show error and abort.
           puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode == true
           puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode == true
           if command[:owners_only]
             unless owner?(event.user.id)
 
               send_error = Helper.error_embed(
-                error: "You don't have permission for that!\nOnly owners are allowed to access this command.",
+                error: "You don't have permission for that!\n"\
+                'Only owners are allowed to access this command.',
                 footer: "Command: `#{event.message.content}`",
                 colour: 0xFA0E30,
                 code_error: false
