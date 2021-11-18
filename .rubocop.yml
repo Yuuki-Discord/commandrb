@@ -1,5 +1,12 @@
+######################################
+############# IMPORTANT ##############
+# When upgrading the RuboCop gem,
+# ensure that new cops do not heavily
+# modify the existing style.
+# Disable any of these new cops.
+######################################
 AllCops:
-  NewCops: disable
+  NewCops: enable
 
 Metrics/BlockLength:
   Enabled: false
@@ -10,25 +17,15 @@ Metrics/MethodLength:
 Metrics/ModuleLength:
   Enabled: false
 
-Metrics/ClassLength:
-  Enabled: false
-
-# TEMPORARY
-Metrics/BlockNesting:
-  Enabled: false
-
 Style/Documentation:
   Enabled: false
- 
-Lint/Debugger:
-  Exclude:
-    - "run.rb"
 
 Layout/EndOfLine:
   EnforcedStyle: lf
 
+# TODO: Please revert to 100!
 Layout/LineLength:
-  Max: 100
+  Max: 130
 
 # Keep to syntactic linting, instead of complexity.
 Metrics/CyclomaticComplexity:
@@ -40,19 +37,12 @@ Metrics/AbcSize:
 Metrics/PerceivedComplexity:
   Enabled: false
 
-# Pending cops for RuboCop 0.80
-Style/HashEachMethods:
-  Enabled: true
+# TODO: Please correct and remove!
+Metrics/BlockNesting:
+  Enabled: false
 
-Style/HashTransformKeys:
-  Enabled: true
+Metrics/ClassLength:
+  Enabled: false
 
-Style/HashTransformValues:
-  Enabled: true
-
-# Pendng cops for RuboCop 0.81
-Lint/RaiseException:
-  Enabled: true
-
-Lint/StructNewOverride:
-  Enabled: true
+Lint/SelfAssignment:
+  Enabled: false

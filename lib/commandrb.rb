@@ -54,15 +54,13 @@ class CommandrbBot
     raise 'No token supplied in init hash!' if @config[:token].nil? || (init_hash[:token] == '')
 
     init_parse_self = begin
-                        init_hash[:parse_self]
-                      rescue StandardError
-                        nil
-                      end
+      init_hash[:parse_self]
+    rescue StandardError
+      nil
+    end
     init_type = @config[:type]
 
-    if init_type == :bot
-      raise 'No client ID or invalid client ID supplied in init hash!' if init_hash[:client_id].nil?
-    end
+    raise 'No client ID or invalid client ID supplied in init hash!' if init_type == :bot && init_hash[:client_id].nil?
 
     @config[:owners] = init_hash[:owners]
     @config[:owners] = [] if @config[:owners].nil?
@@ -145,9 +143,7 @@ class CommandrbBot
           command[:min_args] = 0 if command[:min_args].nil?
           command[:server_only] = false if command[:server_only].nil?
           command[:typing] = @config[:typing_default] if command[:typing_default].nil?
-          if command[:delete_activator].nil?
-            command[:delete_activator] = @config[:delete_activators]
-          end
+          command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
           command[:owner_override] = false if command[:owner_override].nil?
 
           # If the settings are to delete activating messages, then do that.
@@ -155,27 +151,25 @@ class CommandrbBot
           event.message.delete if command[:delete_activator]
 
           # If the command is only for use in servers, display error and abort.
-          unless failed
-            if command[:server_only] && event.channel.private?
-              # For selfbots, a fancy embed will be used. WIP.
-              if @config[:selfbot]
-                event.channel.send_embed do |embed|
-                  embed.colour = 0x221461
-                  embed.title = '❌ An error has occured!'
-                  embed.description = 'This command can only be used in servers!'
-                  embed.footer = Discordrb::Webhooks::EmbedFooter.new(
-                    text: "Command:'#{event.message.content}'"
-                  )
-                end
-              else
-                # If its not a selfbot, an ordinary message will be shown,
-                #   may be changed to embed later.
-                event.respond('❌ This command will only work in servers!')
+          if !failed && (command[:server_only] && event.channel.private?)
+            # For selfbots, a fancy embed will be used. WIP.
+            if @config[:selfbot]
+              event.channel.send_embed do |embed|
+                embed.colour = 0x221461
+                embed.title = '❌ An error has occured!'
+                embed.description = 'This command can only be used in servers!'
+                embed.footer = Discordrb::Webhooks::EmbedFooter.new(
+                  text: "Command:'#{event.message.content}'"
+                )
               end
-              # Abort!
-              finished = true
-              next
+            else
+              # If its not a selfbot, an ordinary message will be shown,
+              #   may be changed to embed later.
+              event.respond('❌ This command will only work in servers!')
             end
+            # Abort!
+            finished = true
+            next
           end
 
           # If the user is a bot and the command is set to not pass bots
@@ -193,7 +187,7 @@ class CommandrbBot
           # If the config is setup to show typing messages, then do so.
           event.channel.start_typing if command[:typing]
 
-          args = event.message.content.split(' ')
+          args = event.message.content.split
           # Parse args if args exist !
           begin
             spaces = 1
@@ -217,29 +211,25 @@ class CommandrbBot
           end
 
           # Check the number of args for the command.
-          unless command[:max_args].nil? || failed
-            if (command[:max_args]).positive? && args.length > command[:max_args]
-              send_error = Helper.error_embed(
-                error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
-                footer: "Command: `#{event.message.content}`",
-                colour: 0xFA0E30,
-                code_error: false
-              )
-              failed = true
-            end
+          if !(command[:max_args].nil? || failed) && ((command[:max_args]).positive? && args.length > command[:max_args])
+            send_error = Helper.error_embed(
+              error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
+              footer: "Command: `#{event.message.content}`",
+              colour: 0xFA0E30,
+              code_error: false
+            )
+            failed = true
           end
 
           # Check the number of args for the command.
-          unless command[:min_args].nil? || failed
-            if (command[:min_args]).positive? && args.length < command[:min_args]
-              send_error = Helper.error_embed(
-                error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
-                footer: "Command: `#{event.message.content}`",
-                colour: 0xFA0E30,
-                code_error: false
-              )
-              failed = true
-            end
+          if !(command[:min_args].nil? || failed) && ((command[:min_args]).positive? && args.length < command[:min_args])
+            send_error = Helper.error_embed(
+              error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
+              footer: "Command: `#{event.message.content}`",
+              colour: 0xFA0E30,
+              code_error: false
+            )
+            failed = true
           end
 
           unless command[:required_permissions].nil? || failed
@@ -263,19 +253,17 @@ class CommandrbBot
           #   show error and abort.
           puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode == true
           puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode == true
-          if command[:owners_only]
-            unless owner?(event.user.id)
+          if command[:owners_only] && !owner?(event.user.id)
 
-              send_error = Helper.error_embed(
-                error: "You don't have permission for that!\n"\
-                'Only owners are allowed to access this command.',
-                footer: "Command: `#{event.message.content}`",
-                colour: 0xFA0E30,
-                code_error: false
-              )
-              failed = true
-              # next
-            end
+            send_error = Helper.error_embed(
+              error: "You don't have permission for that!\n"\
+                     'Only owners are allowed to access this command.',
+              footer: "Command: `#{event.message.content}`",
+              colour: 0xFA0E30,
+              code_error: false
+            )
+            failed = true
+            # next
           end
 
           unless finished
