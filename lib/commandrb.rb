@@ -215,7 +215,6 @@ class CommandrbBot
             send_error = Helper.error_embed(
               error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
               footer: "Command: `#{event.message.content}`",
-              colour: 0xFA0E30,
               code_error: false
             )
             failed = true
@@ -226,7 +225,6 @@ class CommandrbBot
             send_error = Helper.error_embed(
               error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
               footer: "Command: `#{event.message.content}`",
-              colour: 0xFA0E30,
               code_error: false
             )
             failed = true
@@ -242,7 +240,6 @@ class CommandrbBot
               send_error = Helper.error_embed(
                 error: "You don't have permission for that!\nPermission required: `#{x}`",
                 footer: "Command: `#{event.message.content}`",
-                colour: 0xFA0E30,
                 code_error: false
               )
               failed = true
@@ -259,7 +256,6 @@ class CommandrbBot
               error: "You don't have permission for that!\n"\
                      'Only owners are allowed to access this command.',
               footer: "Command: `#{event.message.content}`",
-              colour: 0xFA0E30,
               code_error: false
             )
             failed = true
