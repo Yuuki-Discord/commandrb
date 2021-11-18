@@ -83,7 +83,7 @@ class CommandrbBot
     # Command processing
     @bot.message do |event|
       finished = false
-      chosen = nil
+      chosen_activator = nil
       args = nil
       message_content = nil
       continue = false
@@ -93,8 +93,10 @@ class CommandrbBot
       @prefixes.each do |prefix|
         next unless event.message.content.start_with?(prefix)
 
-        message_content = event.message.content.slice! prefix
-        used_prefix = prefix
+        # Store the message's content, sans its prefix.
+        # Strip leading spaces in the event a prefix ends with a space.
+        message_content = event.message.content
+        message_content.slice! prefix
         break
       end
 
@@ -115,17 +117,17 @@ class CommandrbBot
           puts "Prefix matched! #{activator}" if @debug_mode == true
 
           # Continue only if you've already chosen a choice.
-          if chosen.nil?
+          if chosen_activator.nil?
             puts 'First match obtained!' if @debug_mode == true
             continue = true
-            chosen = activator
+            chosen_activator = activator
 
             # If the new activator begins with the chosen one, then override it.
             # Example: sh is chosen, shell is the new one.
             # In this example, shell would override sh, preventing ugly bugs.
-          elsif activator.start_with?(chosen)
-            puts "#{activator} just overrode #{chosen}" if @debug_mode == true
-            chosen = activator
+          elsif activator.start_with?(chosen_activator)
+            puts "#{activator} just overrode #{chosen_activator}" if @debug_mode == true
+            chosen_activator = activator
           # Otherwise, just give up.
           else
             puts 'Match failed...' if @debug_mode == true
@@ -134,11 +136,11 @@ class CommandrbBot
           end
         end
 
-        puts "Result: #{chosen}" if @debug_mode == true
+        puts "Result: #{chosen_activator}" if @debug_mode == true
 
         next unless continue
 
-        puts "Final result: #{chosen}" if @debug_mode == true
+        puts "Final result: #{chosen_activator}" if @debug_mode == true
 
         # Command flag defaults
         command[:catch_errors] = @config[:catch_errors] if command[:catch_errors].nil?
@@ -170,7 +172,7 @@ class CommandrbBot
         end
 
         # If the user is a bot and the command is set to not pass bots
-        #   OR the user is a botand the global config is to not parse bots...
+        # OR the user is a bot and the global config is to not parse bots...
         # ...then abort :3
         if (
           event.user.bot_account? && command[:parse_bots] == false) \
@@ -184,12 +186,16 @@ class CommandrbBot
         # If the config is setup to show typing messages, then do so.
         event.channel.start_typing if command[:typing]
 
-        args = message_content.split
+        # Our arguments are the message's contents, minus the activator.
+        args = message_content
+        args.slice! chosen_activator
+        args = args.split
 
         # Check the number of args for the command.
-        if !(command[:max_args].nil? || failed) && ((command[:max_args]).positive? && args.length > command[:max_args])
+        max_args = command[:max_args]
+        if !failed && (max_args.positive? && args.length > max_args)
           send_error = Helper.error_embed(
-            error: "Too many arguments! \nMax arguments: `#{command[:max_args]}`",
+            error: "Too many arguments! \nMax arguments: `#{max_args}`",
             footer: "Command: `#{event.message.content}`",
             code_error: false
           )
@@ -197,9 +203,10 @@ class CommandrbBot
         end
 
         # Check the number of args for the command.
-        if !(command[:min_args].nil? || failed) && ((command[:min_args]).positive? && args.length < command[:min_args])
+        min_args = command[:min_args]
+        if !failed && (min_args.positive? && args.length < min_args)
           send_error = Helper.error_embed(
-            error: "Too few arguments! \nMin arguments: `#{command[:min_args]}`",
+            error: "Too few arguments! \nMin arguments: `#{min_args}`",
             footer: "Command: `#{event.message.content}`",
             code_error: false
           )
@@ -257,7 +264,7 @@ class CommandrbBot
         end
 
         # All done here.
-        puts "Finished!! Executed command: #{chosen}" if @debug_mode == true
+        puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
         failed = false
         command = command
         event = event
