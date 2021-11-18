@@ -48,7 +48,6 @@ class CommandrbBot
 
     # @config[:prefix_type] = 'rescue' if @config[:prefix_type].nil?
     @config[:typing_default] = false if @config[:typing_default].nil?
-    @config[:selfbot] = false if @config[:selfbot].nil?
     @config[:delete_activators] = false if @config[:delete_activators].nil?
 
     raise 'No token supplied in init hash!' if @config[:token].nil? || (init_hash[:token] == '')
@@ -134,8 +133,6 @@ class CommandrbBot
 
           puts "Final result: #{chosen}" if @debug_mode == true
 
-          break if @config[:selfbot] && event.user.id != @bot.profile.id
-
           # Command flag defaults
           command[:catch_errors] = @config[:catch_errors] if command[:catch_errors].nil?
           command[:owners_only] = false if command[:owners_only].nil?
@@ -152,20 +149,13 @@ class CommandrbBot
 
           # If the command is only for use in servers, display error and abort.
           if !failed && (command[:server_only] && event.channel.private?)
-            # For selfbots, a fancy embed will be used. WIP.
-            if @config[:selfbot]
-              event.channel.send_embed do |embed|
-                embed.colour = 0x221461
-                embed.title = '❌ An error has occured!'
-                embed.description = 'This command can only be used in servers!'
-                embed.footer = Discordrb::Webhooks::EmbedFooter.new(
-                  text: "Command:'#{event.message.content}'"
-                )
-              end
-            else
-              # If its not a selfbot, an ordinary message will be shown,
-              #   may be changed to embed later.
-              event.respond('❌ This command will only work in servers!')
+            event.channel.send_embed do |embed|
+              embed.colour = 0x221461
+              embed.title = '❌ An error has occurred!'
+              embed.description = 'This command can only be used in servers!'
+              embed.footer = Discordrb::Webhooks::EmbedFooter.new(
+                text: "Command:'#{event.message.content}'"
+              )
             end
             # Abort!
             finished = true
@@ -268,7 +258,7 @@ class CommandrbBot
             if failed
               if command[:failcode].nil?
                 if send_error.nil?
-                  event.respond(':x: An unknown error has occured!')
+                  event.respond(':x: An unknown error has occurred!')
                 else
                   event.channel.send_message('', false, send_error)
                 end
