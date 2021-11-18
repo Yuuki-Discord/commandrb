@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 source 'https://rubygems.org'
-gem 'discordrb'
+gem 'discordrb', github: 'shardlab/discordrb'
 gem 'rainbow'
 
 group :development, optional: true do
