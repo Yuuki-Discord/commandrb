@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'pry'
+require_relative 'format'
 require_relative 'helper'
 
 class CommandrbBot
@@ -16,6 +18,14 @@ class CommandrbBot
   attr_accessor :prefixes
 
   def add_command(name, attributes = {})
+    if attributes.key? :arg_format
+      # Do an extremely brief check that all types are valid.
+      attributes[:arg_format].each do |argument|
+        type = argument[:type]
+        raise "Command #{name} has invalid argument type #{type}!" unless ARGUMENT_TYPES
+      end
+    end
+
     @commands[name.to_sym] = attributes
   end
 
@@ -28,7 +38,7 @@ class CommandrbBot
     true
   end
 
-  # By defining this seperately. we allow you to overwrite it and use your own owner list.
+  # By defining this sepearately. we allow you to overwrite it and use your own owner list.
   # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
   def owner?(id)
     @config[:owners].include?(id)
@@ -59,7 +69,9 @@ class CommandrbBot
     end
     init_type = @config[:type]
 
-    raise 'No client ID or invalid client ID supplied in init hash!' if init_type == :bot && init_hash[:client_id].nil?
+    if init_type == :bot && init_hash[:client_id].nil?
+      raise 'No client ID or invalid client ID supplied in init hash!'
+    end
 
     @config[:owners] = init_hash[:owners]
     @config[:owners] = [] if @config[:owners].nil?
@@ -82,12 +94,10 @@ class CommandrbBot
 
     # Command processing
     @bot.message do |event|
-      finished = false
       chosen_activator = nil
       args = nil
       message_content = nil
-      continue = false
-      failed = false
+      used_prefix = ''
 
       # If we have a usable prefix, get the raw arguments for this command.
       @prefixes.each do |prefix|
@@ -96,7 +106,7 @@ class CommandrbBot
         # Store the message's content, sans its prefix.
         # Strip leading spaces in the event a prefix ends with a space.
         message_content = event.message.content
-        message_content.slice! prefix
+        used_prefix = message_content.slice! prefix
         break
       end
 
@@ -104,8 +114,6 @@ class CommandrbBot
       next if message_content.nil?
 
       @commands.each do |key, command|
-        break if finished
-
         puts ":: Considering #{key}" if @debug_mode == true
         triggers = command[:triggers].nil? ? [key.to_s] : command[:triggers]
 
@@ -119,7 +127,6 @@ class CommandrbBot
           # Continue only if you've already chosen a choice.
           if chosen_activator.nil?
             puts 'First match obtained!' if @debug_mode == true
-            continue = true
             chosen_activator = activator
 
             # If the new activator begins with the chosen one, then override it.
@@ -138,15 +145,13 @@ class CommandrbBot
 
         puts "Result: #{chosen_activator}" if @debug_mode == true
 
-        next unless continue
+        next if chosen_activator.nil?
 
-        puts "Final result: #{chosen_activator}" if @debug_mode == true
+        command_run = used_prefix + chosen_activator
+        puts "Final result: #{command_run}" if @debug_mode == true
 
         # Command flag defaults
-        command[:catch_errors] = @config[:catch_errors] if command[:catch_errors].nil?
         command[:owners_only] = false if command[:owners_only].nil?
-        command[:max_args] = 2000 if command[:max_args].nil?
-        command[:min_args] = 0 if command[:min_args].nil?
         command[:server_only] = false if command[:server_only].nil?
         command[:typing] = @config[:typing_default] if command[:typing_default].nil?
         command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
@@ -157,30 +162,21 @@ class CommandrbBot
         event.message.delete if command[:delete_activator]
 
         # If the command is only for use in servers, display error and abort.
-        if !failed && (command[:server_only] && event.channel.private?)
-          event.channel.send_embed do |embed|
-            embed.colour = 0x221461
-            embed.title = '❌ An error has occurred!'
-            embed.description = 'This command can only be used in servers!'
-            embed.footer = Discordrb::Webhooks::EmbedFooter.new(
-              text: "Command:'#{event.message.content}'"
-            )
-          end
-          # Abort!
-          finished = true
-          next
+        if command[:server_only] && event.channel.private?
+          event.channel.send_embed error_embed(
+            error: 'This command can only be used in servers!',
+            footer: "Command: `#{command_run}`"
+          )
+          break
         end
 
         # If the user is a bot and the command is set to not pass bots
         # OR the user is a bot and the global config is to not parse bots...
         # ...then abort :3
-        if (
-          event.user.bot_account? && command[:parse_bots] == false) \
-          || (event.user.bot_account? && @config[:parse_bots] == false
-             )
+        if event.user.bot_account? && \
+           (command[:parse_bots] == false || @config[:parse_bots] == false)
           # Abort!
-          finished = true
-          next
+          break
         end
 
         # If the config is setup to show typing messages, then do so.
@@ -191,86 +187,53 @@ class CommandrbBot
         args.slice! chosen_activator
         args = args.split
 
-        # Check the number of args for the command.
-        max_args = command[:max_args]
-        if !failed && (max_args.positive? && args.length > max_args)
-          send_error = Helper.error_embed(
-            error: "Too many arguments! \nMax arguments: `#{max_args}`",
-            footer: "Command: `#{event.message.content}`",
-            code_error: false
-          )
-          failed = true
-        end
-
-        # Check the number of args for the command.
-        min_args = command[:min_args]
-        if !failed && (min_args.positive? && args.length < min_args)
-          send_error = Helper.error_embed(
-            error: "Too few arguments! \nMin arguments: `#{min_args}`",
-            footer: "Command: `#{event.message.content}`",
-            code_error: false
-          )
-          failed = true
-        end
-
-        unless command[:required_permissions].nil? || failed
-          command[:required_permissions].each do |x|
-            if event.user.on(event.server).permission?(x, event.channel) \
-              || (command[:owner_override] && @config[:owners].include?(event.user.id))
-              next
-            end
-
-            send_error = Helper.error_embed(
-              error: "You don't have permission for that!\nPermission required: `#{x}`",
-              footer: "Command: `#{event.message.content}`",
-              code_error: false
-            )
-            failed = true
+        command[:required_permissions]&.each do |x|
+          if event.user.on(event.server).permission?(x, event.channel) \
+            || (command[:owner_override] && @config[:owners].include?(event.user.id))
+            next
           end
+
+          event.channel.send_embed '', error_embed(
+            error: "You don't have permission for that!\nPermission required: `#{x}`",
+            footer: "Command: `#{command_run}`"
+          )
+          break
         end
 
         # If the command is set to owners only and the user is not the owner,
-        #   show error and abort.
+        # show an error and abort.
         puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode == true
         puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode == true
         if command[:owners_only] && !owner?(event.user.id)
-
-          send_error = Helper.error_embed(
+          event.channel.send_embed '', error_embed(
             error: "You don't have permission for that!\n"\
                    'Only owners are allowed to access this command.',
-            footer: "Command: `#{event.message.content}`",
-            code_error: false
+            footer: "Command: `#{command_run}`"
           )
-          failed = true
-          # next
+          break
         end
 
-        unless finished
-          # If the command is configured to catch all errors, thy shall be done.
-          # Run the command code!
-          if failed
-            if command[:failcode].nil?
-              if send_error.nil?
-                event.respond(':x: An unknown error has occurred!')
-              else
-                event.channel.send_message('', false, send_error)
-              end
-            else
-              command[:failcode]&.call(event, args, message_content)
-            end
-          else
-            command[:code].call(event, args, message_content)
-          end
+        # Run the command code!
+        begin
+          command_format = derive_arguments(args, command[:arg_format])
+        rescue FormatError => e
+          # Arguments were not provided properly.
+          # Inform the user of this.
+          # TODO: Provide a nicer format of displaying this, instead of a raw error
+          # We may wish to supply command help as well.
+          event.channel.send_embed '', error_embed(
+            error: "Invalid argument for command:\n#{e.message}",
+            footer: "Command: `#{command_run}`"
+          )
+          break
         end
+
+        # TODO: determine a good method to log other errors as made via the command.
+        # Without, we will simply log to console.
+        command[:code].call(event, *command_format)
 
         # All done here.
         puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
-        failed = false
-        command = command
-        event = event
-        args = args
-        message_content = message_content
-        finished = true
         break
       end
     end

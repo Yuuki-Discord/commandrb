@@ -23,9 +23,8 @@ Style/Documentation:
 Layout/EndOfLine:
   EnforcedStyle: lf
 
-# TODO: Please revert to 100!
 Layout/LineLength:
-  Max: 130
+  Max: 100
 
 # Keep to syntactic linting, instead of complexity.
 Metrics/CyclomaticComplexity:
@@ -38,11 +37,5 @@ Metrics/PerceivedComplexity:
   Enabled: false
 
 # TODO: Please correct and remove!
-Metrics/BlockNesting:
-  Enabled: false
-
 Metrics/ClassLength:
-  Enabled: false
-
-Lint/SelfAssignment:
   Enabled: false
