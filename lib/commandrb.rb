@@ -85,8 +85,8 @@ class CommandrbBot
     # Command processing
     @bot.message do |event|
       chosen_activator = nil
-      args = nil
       message_content = nil
+      chosen_command = nil
       used_prefix = ''
 
       # If we have a usable prefix, get the raw arguments for this command.
@@ -118,6 +118,7 @@ class CommandrbBot
           if chosen_activator.nil?
             puts 'First match obtained!' if @debug_mode == true
             chosen_activator = activator
+            chosen_command = command
 
             # If the new activator begins with the chosen one, then override it.
             # Example: sh is chosen, shell is the new one.
@@ -125,107 +126,99 @@ class CommandrbBot
           elsif activator.start_with?(chosen_activator)
             puts "#{activator} just overrode #{chosen_activator}" if @debug_mode == true
             chosen_activator = activator
+            chosen_command = command
           # Otherwise, just give up.
-          else
-            puts 'Match failed...' if @debug_mode == true
-            next
-            # If you haven't chosen yet, get choosing!
+          elsif @debug_mode == true
+            puts 'Match failed...'
           end
+          # If you haven't chosen yet, get choosing!
         end
 
         puts "Result: #{chosen_activator}" if @debug_mode == true
+      end
 
-        next if chosen_activator.nil?
+      command_run = used_prefix + chosen_activator
+      puts "Final result: #{command_run}" if @debug_mode == true
 
-        command_run = used_prefix + chosen_activator
-        puts "Final result: #{command_run}" if @debug_mode == true
+      # Command flag defaults
+      chosen_command[:owners_only] = false if chosen_command[:owners_only].nil?
+      chosen_command[:server_only] = false if chosen_command[:server_only].nil?
+      chosen_command[:typing] = @config[:typing_default] if chosen_command[:typing_default].nil?
+      if chosen_command[:delete_activator].nil?
+        chosen_command[:delete_activator] =
+          @config[:delete_activators]
+      end
+      chosen_command[:owner_override] = false if chosen_command[:owner_override].nil?
 
-        # Command flag defaults
-        command[:owners_only] = false if command[:owners_only].nil?
-        command[:server_only] = false if command[:server_only].nil?
-        command[:typing] = @config[:typing_default] if command[:typing_default].nil?
-        command[:delete_activator] = @config[:delete_activators] if command[:delete_activator].nil?
-        command[:owner_override] = false if command[:owner_override].nil?
+      # If the settings are to delete activating messages, then do that.
+      # I'm *hoping* this doesn't cause issues with argument extraction.
+      event.message.delete if chosen_command[:delete_activator]
 
-        # If the settings are to delete activating messages, then do that.
-        # I'm *hoping* this doesn't cause issues with argument extraction.
-        event.message.delete if command[:delete_activator]
-
-        # If the command is only for use in servers, display error and abort.
-        if command[:server_only] && event.channel.private?
-          event.channel.send_embed error_embed(
-            error: 'This command can only be used in servers!',
-            footer: "Command: `#{command_run}`"
-          )
-          break
-        end
-
-        # If the user is a bot and the command is set to not pass bots
-        # OR the user is a bot and the global config is to not parse bots...
-        # ...then abort :3
-        if event.user.bot_account? && \
-           (command[:parse_bots] == false || @config[:parse_bots] == false)
-          # Abort!
-          break
-        end
-
-        # If the config is setup to show typing messages, then do so.
-        event.channel.start_typing if command[:typing]
-
-        # Our arguments are the message's contents, minus the activator.
-        args = message_content
-        args.slice! chosen_activator
-        args = args.split
-
-        command[:required_permissions]&.each do |x|
-          if event.user.on(event.server).permission?(x, event.channel) \
-            || (command[:owner_override] && @config[:owners].include?(event.user.id))
-            next
-          end
-
-          event.channel.send_embed '', error_embed(
-            error: "You don't have permission for that!\nPermission required: `#{x}`",
-            footer: "Command: `#{command_run}`"
-          )
-          break
-        end
-
-        # If the command is set to owners only and the user is not the owner,
-        # show an error and abort.
-        puts "[DEBUG] Command being processed: '#{command}'" if @debug_mode == true
-        puts "[DEBUG] Owners only? #{command[:owners_only]}" if @debug_mode == true
-        if command[:owners_only] && !owner?(event.user.id)
-          event.channel.send_embed '', error_embed(
-            error: "You don't have permission for that!\n"\
-                   'Only owners are allowed to access this command.',
-            footer: "Command: `#{command_run}`"
-          )
-          break
-        end
-
-        # Run the command code!
-        begin
-          command_format = derive_arguments(args, command[:arg_format])
-        rescue FormatError => e
-          # Arguments were not provided properly.
-          # Inform the user of this.
-          # TODO: Provide a nicer format of displaying this, instead of a raw error
-          # We may wish to supply command help as well.
-          event.channel.send_embed '', error_embed(
-            error: "Invalid argument for command:\n#{e.message}",
-            footer: "Command: `#{command_run}`"
-          )
-          break
-        end
-
-        # TODO: determine a good method to log other errors as made via the command.
-        # Without, we will simply log to console.
-        command[:code].call(event, *command_format)
-
-        # All done here.
-        puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
+      # If the command is only for use in servers, display error and abort.
+      if chosen_command[:server_only] && event.channel.private?
+        event.channel.send_embed error_embed(
+          error: 'This command can only be used in servers!',
+          footer: "Command: `#{command_run}`"
+        )
         break
       end
+
+      # If the user is a bot and the command is set to not pass bots
+      # OR the user is a bot and the global config is to not parse bots...
+      # ...then abort :3
+      if event.user.bot_account? && \
+         (chosen_command[:parse_bots] == false || @config[:parse_bots] == false)
+        # Abort!
+        break
+      end
+
+      # If the config is setup to show typing messages, then do so.
+      event.channel.start_typing if chosen_command[:typing]
+
+      # Our arguments are the message's contents, minus the activator.
+      args = message_content
+      args.slice! chosen_activator
+      args = args.split
+
+      no_permission = false
+
+      chosen_command[:required_permissions]&.each do |x|
+        if event.user.on(event.server).permission?(x, event.channel) \
+          || (chosen_command[:owner_override] && @config[:owners].include?(event.user.id))
+          next
+        end
+
+        event.channel.send_embed '', error_embed(
+          error: "You don't have permission for that!\nPermission required: `#{x}`",
+          footer: "Command: `#{command_run}`"
+        )
+        no_permission = true
+        break
+      end
+
+      next if no_permission
+
+      # If the command is set to owners only and the user is not the owner,
+      # show an error and abort.
+      puts "[DEBUG] Command being processed: '#{chosen_command}'" if @debug_mode == true
+      puts "[DEBUG] Owners only? #{chosen_command[:owners_only]}" if @debug_mode == true
+      if chosen_command[:owners_only] && !owner?(event.user.id)
+        event.channel.send_embed '', error_embed(
+          error: "You don't have permission for that!\n"\
+                 'Only owners are allowed to access this command.',
+          footer: "Command: `#{command_run}`"
+        )
+        next
+      end
+
+      # Run the command code!
+      # TODO: determine a good method to log other errors as made via the command.
+      # Without, we will simply log to console.
+      chosen_command[:code].call(event, args, message_content)
+
+      # All done here.
+      puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
+      next
     end
   end
 end
