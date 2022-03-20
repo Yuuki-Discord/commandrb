@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'pry'
-require_relative 'format'
 require_relative 'helper'
 
 class CommandrbBot
@@ -18,14 +16,6 @@ class CommandrbBot
   attr_accessor :prefixes
 
   def add_command(name, attributes = {})
-    if attributes.key? :arg_format
-      # Do an extremely brief check that all types are valid.
-      attributes[:arg_format].each do |argument|
-        type = argument[:type]
-        raise "Command #{name} has invalid argument type #{type}!" unless ARGUMENT_TYPES
-      end
-    end
-
     @commands[name.to_sym] = attributes
   end
 
