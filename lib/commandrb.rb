@@ -28,7 +28,7 @@ class CommandrbBot
     true
   end
 
-  # By defining this sepearately. we allow you to overwrite it and use your own owner list.
+  # By defining this separately, we allow you to overwrite it and use your own owner list.
   # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
   def owner?(id)
     @config[:owners].include?(id)
@@ -46,7 +46,6 @@ class CommandrbBot
 
     # Load sane defaults for options that aren't specified.
 
-    # @config[:prefix_type] = 'rescue' if @config[:prefix_type].nil?
     @config[:typing_default] = false if @config[:typing_default].nil?
     @config[:delete_activators] = false if @config[:delete_activators].nil?
 
@@ -136,6 +135,10 @@ class CommandrbBot
 
         puts "Result: #{chosen_activator}" if @debug_mode == true
       end
+
+      # If we have no chosen activator, it is likely the command does not exist
+      # or the prefix itself was run.
+      next if chosen_activator.nil?
 
       command_run = used_prefix + chosen_activator
       puts "Final result: #{command_run}" if @debug_mode == true
