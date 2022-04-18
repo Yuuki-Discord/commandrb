@@ -1,24 +1,44 @@
 # frozen_string_literal: true
 
+require 'pry'
+require_relative 'format'
 require_relative 'helper'
 
 class CommandrbBot
-  # Be able to adjust the config on the fly.
+  # The loaded configuration. It is safe to adjust this during runtime.
   attr_accessor :config
 
   # Needed to run the bot, or create custom events.
   attr_accessor :bot
 
-  # Can manually manipulate commands using this.
+  # A store of registered commands. You can manipulate this throughout runtime.
   attr_accessor :commands
 
-  # Lets you change global prefixes while the bot is running (Not recommended!)
+  # A list of global prefixes. It is not recommended to change this while the bot is running.
   attr_accessor :prefixes
 
+  # Registers a command with the command handler.
+  # @param [Object] name The name of the command to run.
+  # @param [Hash] attributes Options about the command.
+  # @option attributes [Bool] :delete_activator (false) Whether the
+  #   invoking message should be deleted upon execution.
+  # @option attributes [Bool] :typing (false) Whether the
+  #   bot should start typing while executing a command, i.e.
+  #   to signify a long-running command.
+  # @option attributes [Bool] :server_only (false) Whether the
+  #   command should only be run in servers and not be available in DMs.
+  # @option attributes [Bool] :owners_only (false) Whether this command
+  #   should only be run by bot owners.
+  # @option attributes [Bool] :owner_override (false) Whether channel
+  #   permissions should be ignored because the user is a bot owner.
+  # @option attributes [Proc] :code The code to invoke upon command execution.
   def add_command(name, attributes = {})
     @commands[name.to_sym] = attributes
   end
 
+  # Removes a registered command for the given name.
+  # @param [Object] name The name of the registered command.
+  # @return [Bool] Whether the command was removed.
   def remove_command(name)
     begin
       @commands.delete(name)
@@ -28,8 +48,12 @@ class CommandrbBot
     true
   end
 
+  # Determines whether the given ID is an owner.
+  #
   # By defining this separately, we allow you to overwrite it and use your own owner list.
   # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
+  # @param [Integer] id ID of the user to check against.
+  # @returns [Bool] whether the user is an owner of the bot
   def owner?(id)
     @config[:owners].include?(id)
   end

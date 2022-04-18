@@ -12,4 +12,5 @@ group :development, optional: true do
   gem 'rubocop'
   gem 'rubocop-rake'
   gem 'ruby-debug-ide'
+  gem 'yard'
 end

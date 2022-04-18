@@ -2,6 +2,8 @@
 
 class CommandrbBot
   # Utilizes several methods to attempt to determine a user.
+  # @param [String] context Context to assist with matching a user by ID or name.
+  # @return [Discordrb::User] The user in question, or nil if the user could not be determined.
   def user_parse(context)
     # Can't do anything if there's nothing to begin with.
     return nil if context.nil?
