@@ -18,7 +18,7 @@ class CommandrbBot
   attr_accessor :prefixes
 
   # Registers a command with the command handler.
-  # @param [Object] name The name of the command to run.
+  # @param [String] name The name of the command to run.
   # @param [Hash] attributes Options about the command.
   # @option attributes [Bool] :delete_activator (false) Whether the
   #   invoking message should be deleted upon execution.
@@ -31,13 +31,18 @@ class CommandrbBot
   #   should only be run by bot owners.
   # @option attributes [Bool] :owner_override (false) Whether channel
   #   permissions should be ignored because the user is a bot owner.
-  # @option attributes [Proc] :code The code to invoke upon command execution.
-  def add_command(name, attributes = {})
+  # @yieldreturn [Discordrb::Events] The event corresponding to this command invocation.
+  # @yieldreturn [Array<String>] Arguments run alongside the command.
+  # @yieldreturn [String] The full contents of the invoking message.
+  def add_command(name, attributes = {}, &block)
+    raise "Command #{name} has no block specified!" if block.nil?
+
     @commands[name.to_sym] = attributes
+    @commands[name.to_sym][:code] = block
   end
 
   # Removes a registered command for the given name.
-  # @param [Object] name The name of the registered command.
+  # @param [String] name The name of the registered command.
   # @return [Bool] Whether the command was removed.
   def remove_command(name)
     begin
@@ -53,7 +58,7 @@ class CommandrbBot
   # By defining this separately, we allow you to overwrite it and use your own owner list.
   # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
   # @param [Integer] id ID of the user to check against.
-  # @returns [Bool] whether the user is an owner of the bot
+  # @return [Bool] whether the user is an owner of the bot
   def owner?(id)
     @config[:owners].include?(id)
   end

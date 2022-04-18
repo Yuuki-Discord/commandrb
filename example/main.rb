@@ -13,9 +13,8 @@ cbot = CommandrbBot.new(
   }
 )
 
-cbot.add_command(:ping,
-                 code: proc { |event, _args|
-                         event.respond('Pong!')
-                       })
+cbot.add_command(:ping) do |event|
+  event.respond('Pong!')
+end
 
 cbot.bot.run
