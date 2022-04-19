@@ -21,13 +21,20 @@ class TextFormat
     arg_format.each do |symbol, format|
       arg_type = format[:type]
       current_arg = reader.next_arg
+      # If there are no more arguments...
+      if current_arg.nil?
+        # and we are an optional type, stop processing.
+        break if format[:optional] == true
+
+        # Otherwise, we need to raise an error.
+        # TODO: provide argument information, i.e. remaining commands?
+        raise NotEnoughArgumentsError
+      end
 
       case arg_type
       when :user
         user = Helper.user_parse(bot, current_arg)
-        if user.nil? && format[:optional] == true
-          raise FormatError.new arg_type, 'No user given or found!'
-        end
+        raise FormatError.new arg_type, 'No user given or found!' if user.nil?
 
         result_args[symbol] = user
       else

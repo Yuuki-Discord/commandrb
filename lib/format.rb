@@ -23,12 +23,11 @@ class ArgumentHash < Hash
   end
 
   def method_missing(name, *args)
-    # Check if this symbol is available.
-    if key? name
-      self[name]
-    else
-      super
-    end
+    # We do not want to handle calls with arguments.
+    super unless args.empty?
+
+    # Access this key normally.
+    self[name]
   end
 end
 
@@ -40,4 +39,9 @@ class FormatError < RuntimeError
     @arg_type = arg_type
     super(msg)
   end
+end
+
+# NotEnoughArgumentsError can be raised when there are not enough arguments
+# given to fully process a command.
+class NotEnoughArgumentsError < RuntimeError
 end

@@ -262,7 +262,7 @@ class CommandrbBot
 
       # Handle arguments accordingly.
       args = message_content.delete_prefix chosen_activator
-      args = args.strip!
+      args = args.strip
       args = if chosen_command[:arg_format].nil?
                # Our arguments are the message's contents, minus the activator.
                args.split
