@@ -59,6 +59,16 @@ class TextFormat
         rescue ArgumentError
           raise FormatError.new arg_type, 'Invalid integer value!'
         end
+      when :boolean
+        # Attempt to determine common boolean representations.
+        case current_arg
+        when 'yes', 'true', '1'
+          arg_value = true
+        when 'no', 'false', '0'
+          arg_value = false
+        else
+          raise FormatError.new arg_type, 'Invalid boolean type passed!'
+        end
       when :user
         # We must attempt parsing a user via several methods.
         arg_value = Helper.user_parse(bot, current_arg)
