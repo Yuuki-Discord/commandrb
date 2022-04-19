@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.summary     = 'Commandrb'
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
   s.authors     = ['Erisa A']
-  s.email       = 'seriel@erisa.moe'
+  s.email       = 'erisa@erisa.uk'
   s.files       = ['lib/commandrb.rb', 'lib/helper.rb']
   s.required_ruby_version = '>= 3.0'
   s.homepage =
