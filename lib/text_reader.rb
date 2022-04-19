@@ -78,4 +78,10 @@ class TextReader
 
     value
   end
+
+  # Reads the remaining text stored.
+  # @return [String] Argument contents
+  def read_remaining
+    @contents.strip
+  end
 end

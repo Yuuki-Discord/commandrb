@@ -20,7 +20,15 @@ class TextFormat
 
     arg_format.each do |symbol, format|
       arg_type = format[:type]
-      current_arg = reader.next_arg
+
+      # Determine the argument contents for the type.
+      # Only for :remaining we call read_remaining.
+      current_arg = if arg_type == :remaining
+                      reader.read_remaining
+                    else
+                      reader.next_arg
+                    end
+
       # If there are no more arguments...
       if current_arg.nil?
         # and we are an optional type, stop processing.
@@ -31,15 +39,33 @@ class TextFormat
         raise NotEnoughArgumentsError
       end
 
+      # We switch by argument type.
       case arg_type
-      when :user
-        user = Helper.user_parse(bot, current_arg)
-        raise FormatError.new arg_type, 'No user given or found!' if user.nil?
+      when :string, :remaining
+        # We simply use the next argument for string values.
+        arg_value = current_arg
 
-        result_args[symbol] = user
+        # An upper character limit may be specified.
+        if (format.key? :max_char) && (arg_value.length > format[:max_char])
+          raise FormatError.new arg_type, "Maximum character limit exceeded! (#{format[:max_char]})"
+        end
+      when :integer
+        # Integer values must be validated.
+        begin
+          arg_value = Integer(current_arg)
+        rescue ArgumentError
+          raise FormatError.new arg_type, 'Invalid integer value!'
+        end
+      when :user
+        # We must attempt parsing a user via several methods.
+        arg_value = Helper.user_parse(bot, current_arg)
+        raise FormatError.new arg_type, 'No user given or found!' if arg_value.nil?
       else
         raise FormatError.new arg_type, 'Unimplemented type given!'
       end
+
+      # Set the obtained value.
+      result_args[symbol] = arg_value
     end
 
     result_args
