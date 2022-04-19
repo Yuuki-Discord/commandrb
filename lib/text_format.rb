@@ -4,6 +4,9 @@ require_relative 'text_reader'
 
 # TextFormat implements parsing arguments for text-based commands.
 class TextFormat
+  # The format for the current argument.
+  @format = nil
+
   # Parses a text command to have formatting, similar to slash commands.
   # @param [Discordrb::CommandBot] bot The bot handling this message.
   # @param [String] args Contents of the message.
@@ -19,7 +22,8 @@ class TextFormat
     result_args = ArgumentHash.new
 
     arg_format.each do |symbol, format|
-      arg_type = format[:type]
+      @format = format
+      arg_type = @format[:type]
 
       # Determine the argument contents for the type.
       # Only for :remaining we call read_remaining.
@@ -31,9 +35,10 @@ class TextFormat
 
       # If there are no more arguments...
       if current_arg.nil?
-        # If we are an optional type, use the default.
-        if format[:optional]
-          result_args[symbol] = format[:default] if format[:default]
+        # If we are an optional type, there's no issue.
+        if @format[:optional]
+          # Ensure we set the default.
+          result_args[symbol] = @format[:default] if @format.key? :default
           break
         end
 
@@ -42,66 +47,126 @@ class TextFormat
         raise NotEnoughArgumentsError
       end
 
-      # We switch by argument type.
-      case arg_type
-      when :string, :remaining
-        # We simply use the next argument for string values.
-        arg_value = current_arg
-
-        # An upper character limit may be specified.
-        if (format.key? :max_char) && (arg_value.length > format[:max_char])
-          raise FormatError.new arg_type, "Maximum character limit exceeded! (#{format[:max_char]})"
-        end
-      when :integer
-        # Integer values must be validated.
-        begin
-          arg_value = Integer(current_arg)
-        rescue ArgumentError
-          raise FormatError.new arg_type, 'Invalid integer value!'
-        end
-      when :number
-        # Similarly, double (er... float) values must be validated.
-        begin
-          arg_value = Float(current_arg)
-        rescue ArgumentError
-          raise FormatError.new arg_type, 'Invalid double value!'
-        end
-      when :boolean
-        # Attempt to determine common boolean representations.
-        case current_arg
-        when 'yes', 'true', '1'
-          arg_value = true
-        when 'no', 'false', '0'
-          arg_value = false
-        else
-          raise FormatError.new arg_type, 'Invalid boolean type passed!'
-        end
-      when :user
-        # We must attempt parsing a user via several methods.
-        arg_value = Helper.user_parse(bot, current_arg)
-        raise FormatError.new arg_type, 'No user given or found!' if arg_value.nil?
-      when :channel
-        arg_value = Helper.channel_parse(bot, current_arg)
-        raise FormatError.new arg_type, 'No channel given or found!' if arg_value.nil?
-      else
-        raise FormatError.new arg_type, 'Unimplemented type given!'
-      end
+      # Switch by argument type.
+      arg_value = case arg_type
+                  when :string, :remaining
+                    parse_string current_arg
+                  when :integer
+                    parse_integer current_arg
+                  when :number
+                    parse_number current_arg
+                  when :boolean
+                    parse_boolean current_arg
+                  when :user
+                    parse_user bot, current_arg
+                  when :channel
+                    parse_channel bot, current_arg
+                  else
+                    format_error 'Unimplemented type given!'
+                  end
 
       # If we have choices, we must now validate them.
-      if format[:choices]
-        valid = false
-        format[:choices].each do |choice|
-          # For text commands, we will allow both the name and internal value for backwards compat.
-          valid = true if choice[:name] == arg_value || choice[:value] == arg_value
-        end
-
-        raise FormatError.new arg_type, 'Invalid choice!' unless valid
-      end
+      validate_choices(arg_value, format[:choices]) if format[:choices]
 
       # Set the obtained value.
       result_args[symbol] = arg_value
     end
 
     result_args
+  end
+
+  # Parses a boolean value from a string.
+  # @raise [FormatError] if the given boolean is not a boolean value
+  # @return [Bool] The parsed boolean value.
+  def self.parse_boolean(boolean)
+    case boolean
+    when 'yes', 'true', '1'
+      true
+    when 'no', 'false', '0'
+      false
+    else
+      format_error 'Invalid boolean type passed!'
+    end
+  end
+
+  # Finds a channel from a string.
+  # @param [Discordrb::Commands::CommandBot] bot The bot handling this message.
+  # @param [String] given_channel The channel to parse.
+  # @raise [FormatError] if the given channel does not pass validation
+  # @return [Discordrb::Channel] The determined channel.
+  def self.parse_channel(bot, given_channel)
+    arg_value = Helper.channel_parse(bot, given_channel)
+    format_error 'No channel given or found!' if arg_value.nil?
+    arg_value
+  end
+
+  # Parses an integer value from a string.
+  # @param [String] integer The integer to parse.
+  # @raise [FormatError] if the given integer does not pass validation
+  # @return [Integer] The parsed integer value.
+  def self.parse_integer(integer)
+    # TODO: implement bounds checks
+    Integer(integer)
+  rescue ArgumentError
+    format_error 'Invalid integer value!'
+  end
+
+  # Parses a number (i.e. float) value from a string
+  # @param [String] number The number to parse.
+  # @raise [FormatError] if the given number does not pass validation
+  # @return [Float] The parsed numerical value.
+  def self.parse_number(number)
+    # TODO: implement bounds checks
+    Float(number)
+  rescue ArgumentError
+    format_error 'Invalid double value!'
+  end
+
+  # Validates a string from the given parameters.
+  # @param [String] string The string to validate.
+  # @raise [FormatError] if the given value does not pass validation
+  # @return [String] The determined string value.
+  def self.parse_string(string)
+    # TODO: fully implement bounds checks
+
+    # An upper character limit may be specified.
+    if (@format.key? :max_char) && (string.length > @format[:max_char])
+      format_error "Maximum character limit exceeded! (#{@format[:max_char]})"
+    end
+
+    string
+  end
+
+  # Finds a user from a string.
+  # @param [Discordrb::Commands::CommandBot] bot The bot handling this message.
+  # @param [String] given_user The user to parse.
+  # @raise [FormatError] if the given user could not be resolved
+  # @return [Discordrb::User] The determined user.
+  def self.parse_user(bot, given_user)
+    user = Helper.user_parse(bot, given_user)
+    format_error 'No user given or found!' if user.nil?
+    user
+  end
+
+  # Validates whether a given choice is a valid choice.
+  # @param [String, Integer, Float] given_choice The choice given by the user.
+  # @param [Array<Hash>] choices
+  #   Available choices per the registered command.
+  # @option choices [String] name The name of this choice value.
+  # @option choices [String, Integer, Float] value The value of this choice.
+  # @raise [FormatError] if the given value is not an applicable choice
+  def self.validate_choices(given_choice, choices)
+    choices.each do |choice|
+      # For text commands, we will allow both the name and internal value for backwards compat.
+      break if choice[:name] == given_choice || choice[:value] == given_choice
+    end
+
+    format_error 'Invalid choice!'
+  end
+
+  # Raises a formatting error for the current format.
+  # @raise [FormatError] An error regarding the current format
+  def self.format_error(message)
+    raise FormatError.new @format, message
   end
 end

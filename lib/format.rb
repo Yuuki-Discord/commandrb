@@ -33,10 +33,10 @@ end
 
 # FormatError is an error type thrown throughout argument parsing.
 class FormatError < RuntimeError
-  attr_reader :arg_type
+  attr_reader :arg_format
 
-  def initialize(arg_type, msg)
-    @arg_type = arg_type
+  def initialize(arg_format, msg)
+    @arg_format = arg_format
     super(msg)
   end
 end
