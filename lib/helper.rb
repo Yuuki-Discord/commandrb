@@ -32,7 +32,8 @@ class Helper
   # Utilizes several methods to attempt to determine a channel.
   # @param [Discordrb::CommandBot] bot The bot handling this message.
   # @param [String] context Context to assist with matching a channel by ID or name.
-  # @return [Discordrb::Channel, nil] The channel in question, or nil if the channel could not be determined.
+  # @return [Discordrb::Channel, nil] The channel in question,
+  #   or nil if the channel could not be determined.
   def self.channel_parse(bot, context)
     # Can't do anything if there's nothing to begin with.
     return nil if context.nil?
