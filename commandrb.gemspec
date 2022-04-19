@@ -7,10 +7,9 @@ Gem::Specification.new do |s|
   s.description = 'A customisable and easy to use Commands System for Discordrb.'
   s.authors     = ['Erisa A']
   s.email       = 'erisa@erisa.uk'
-  s.files       = ['lib/commandrb.rb', 'lib/helper.rb']
+  s.files       = Dir['lib/*.rb']
   s.required_ruby_version = '>= 3.0'
-  s.homepage =
-    'https://github.com/Yuuki-Discord/commandrb'
+  s.homepage = 'https://github.com/Yuuki-Discord/commandrb'
   s.license = 'MIT'
   s.add_runtime_dependency 'discordrb', '~> 3.3', '>= 3.3.0'
   s.metadata = {
