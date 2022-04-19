@@ -100,6 +100,15 @@ class CommandrbBot
 
   alias is_owner? owner?
 
+  # Initializes Commandrb for the given token and credentials.
+  # @param [Hash] init_hash Attributes for the bot to use.
+  # @option init_hash [String] :token A bot token provided by Discord.
+  # @option init_hash [Integer] :client_id The client ID for this bot as provided by Discord.
+  # @option init_hash [Array<Integer>] :owners An array of owners for :owner_only commands.
+  # @option init_hash [Boolean] :typing_default (false) Whether to begin typing upon
+  #   command invocation.
+  # @option init_hash [Boolean] :delete_activators (false) Whether to delete the invocation message.
+  # @option init_hash [Boolean] :parse_bots (false) Whether to respond to messages from other bots.
   def initialize(init_hash)
     @debug_mode = ENV['COMMANDRB_MODE'] == 'debug'
 
