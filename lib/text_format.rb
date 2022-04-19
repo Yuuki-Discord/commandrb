@@ -7,8 +7,8 @@ class TextFormat
   # The format for the current argument.
   @format = nil
 
-  # The bot handling this message.
-  @bot = nil
+  # The event for this message.
+  @event = nil
 
   # The argument content to parse for this message.
   @reader = nil
@@ -18,11 +18,11 @@ class TextFormat
   @all_formats = nil
 
   # Creates a TextFormat object to derive arguments.
-  # @param [Discordrb::Bot] bot The bot handling this message.
+  # @param [Discordrb::Events::MessageEvent] event The event for this message.
   # @param [String] args The string of arguments to this command.
   # @param [Hash{Symbol => Hash}] arg_format An array of argument formats.
-  def initialize(bot, args, arg_format)
-    @bot = bot
+  def initialize(event, args, arg_format)
+    @event = event
     # Hand off reading to our custom class.
     @reader = TextReader.new args unless args.nil?
     @all_formats = arg_format unless arg_format.nil?
@@ -51,7 +51,7 @@ class TextFormat
         # If we are an optional type, there's no issue.
         if @format[:optional]
           # Ensure we set the default.
-          result_args[symbol] = @format[:default] if @format.key? :default
+          result_args[symbol] = determine_default
           break
         end
 
@@ -107,7 +107,7 @@ class TextFormat
   # @raise [FormatError] if the given channel does not pass validation
   # @return [Discordrb::Channel] The determined channel.
   def parse_channel(given_channel)
-    arg_value = Helper.channel_parse(@bot, given_channel)
+    arg_value = Helper.channel_parse(@event.bot, given_channel)
     format_error 'No channel given or found!' if arg_value.nil?
     arg_value
   end
@@ -154,7 +154,7 @@ class TextFormat
   # @raise [FormatError] if the given user could not be resolved
   # @return [Discordrb::User] The determined user.
   def parse_user(given_user)
-    user = Helper.user_parse(@bot, given_user)
+    user = Helper.user_parse(@event.bot, given_user)
     format_error 'No user given or found!' if user.nil?
     user
   end
@@ -180,5 +180,24 @@ class TextFormat
   # @raise [FormatError] An error regarding the current format
   def format_error(message)
     raise FormatError.new @format, message
+  end
+
+  # Determines the default value for the current format.
+  # @return [Object] Default value specified for the format.
+  def determine_default
+    return nil unless @format.key? :default
+
+    # Users and channels can have symbols defaults, allowing context-aware defaults.
+    default = @format[:default]
+    type = @format[:type]
+
+    if type == :user && default == :current_user
+      @event.user
+    elsif type == :channel && default == :current_channel
+      @event.channel
+    else
+      # Use the provided default per the format.
+      default
+    end
   end
 end

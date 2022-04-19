@@ -280,7 +280,7 @@ class CommandrbBot
                args.split
              else
                # We rely on the command's specified formatting for parsing.
-               format = TextFormat.new bot, args, chosen_command[:arg_format]
+               format = TextFormat.new event, args, chosen_command[:arg_format]
                format.derive_arguments
              end
 
