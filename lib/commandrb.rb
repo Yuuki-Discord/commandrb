@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require 'discordrb'
-require_relative 'text_format'
+require_relative 'format'
 require_relative 'helper'
+require_relative 'text_format'
 
 # CommandrbBot manages prefixes and command registration for a bot.
 class CommandrbBot
@@ -39,6 +40,25 @@ class CommandrbBot
   # @yieldreturn [String] The full contents of the invoking message.
   def add_command(name, attributes = {}, &block)
     raise "Command #{name} has no block specified!" if block.nil?
+
+    if attributes.key? :arg_format
+      # Keep track of encountered optional arguments.
+      seen_optional = false
+
+      # Do an extremely brief check that all types are valid.
+      attributes[:arg_format].each do |arg_name, format|
+        type = format[:type]
+        raise "#{name} has #{arg_name} with invalid argument type #{type}!" unless ARGUMENT_TYPES
+
+        # Once we've seen an optional arg, all args past it must be optional.
+        is_optional = format[:optional] || false
+        if seen_optional && !is_optional
+          raise "#{name} has #{arg_name} marked as non-optional after previous optional type!"
+        end
+
+        seen_optional = true if is_optional
+      end
+    end
 
     @commands[name.to_sym] = attributes
     @commands[name.to_sym][:code] = block
@@ -242,12 +262,13 @@ class CommandrbBot
 
       # Handle arguments accordingly.
       args = message_content.delete_prefix chosen_activator
+      args = args.strip!
       args = if chosen_command[:arg_format].nil?
                # Our arguments are the message's contents, minus the activator.
                args.split
              else
                # We rely on the command's specified formatting for parsing.
-               TextFormat.derive_arguments(args, chosen_command[:arg_format])
+               TextFormat.derive_arguments(bot, args, chosen_command[:arg_format])
              end
 
       # Run the command code!

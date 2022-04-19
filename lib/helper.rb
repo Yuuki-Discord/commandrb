@@ -5,9 +5,10 @@ require 'discordrb'
 # Helper provides several common functions performed throughout the codebase.
 class Helper
   # Utilizes several methods to attempt to determine a user.
+  # @param [Discordrb::CommandBot] bot The bot handling this message.
   # @param [String] context Context to assist with matching a user by ID or name.
   # @return [Discordrb::User, nil] The user in question, or nil if the user could not be determined.
-  def self.user_parse(context)
+  def self.user_parse(bot, context)
     # Can't do anything if there's nothing to begin with.
     return nil if context.nil?
 

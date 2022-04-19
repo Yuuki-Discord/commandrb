@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ['Erisa A']
   s.email       = 'seriel@erisa.moe'
   s.files       = ['lib/commandrb.rb', 'lib/helper.rb']
-  s.required_ruby_version = '>= 2.5'
+  s.required_ruby_version = '>= 3.0'
   s.homepage =
     'https://github.com/Yuuki-Discord/commandrb'
   s.license = 'MIT'
