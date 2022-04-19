@@ -31,8 +31,11 @@ class TextFormat
 
       # If there are no more arguments...
       if current_arg.nil?
-        # and we are an optional type, stop processing.
-        break if format[:optional] == true
+        # and we are an optional type, use the default.
+        if format[:optional]
+          result_args[symbol] = format[:default] if format[:default]
+          break
+        end
 
         # Otherwise, we need to raise an error.
         # TODO: provide argument information, i.e. remaining commands?
