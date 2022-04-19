@@ -80,6 +80,9 @@ class TextFormat
         # We must attempt parsing a user via several methods.
         arg_value = Helper.user_parse(bot, current_arg)
         raise FormatError.new arg_type, 'No user given or found!' if arg_value.nil?
+      when :channel
+        arg_value = Helper.channel_parse(bot, current_arg)
+        raise FormatError.new arg_type, 'No channel given or found!' if arg_value.nil?
       else
         raise FormatError.new arg_type, 'Unimplemented type given!'
       end

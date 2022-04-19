@@ -29,6 +29,31 @@ class Helper
     nil
   end
 
+  # Utilizes several methods to attempt to determine a channel.
+  # @param [Discordrb::CommandBot] bot The bot handling this message.
+  # @param [String] context Context to assist with matching a channel by ID or name.
+  # @return [Discordrb::Channel, nil] The channel in question, or nil if the channel could not be determined.
+  def self.channel_parse(bot, context)
+    # Can't do anything if there's nothing to begin with.
+    return nil if context.nil?
+
+    # Catches cases such as "0": obviously invalid, attempted nonetheless.
+    context = context.to_s
+
+    # If it's an ID.
+    id_check = bot.channel(context)
+    return id_check unless id_check.nil?
+
+    # If it's a mention!
+    matches = /<#!?(\d+)>/.match(context)
+    return bot.channel(matches[1]) unless matches.nil?
+
+    # Might be a channel's name...
+    return bot.find_channel(context)[0] unless bot.find_channel(context).nil?
+
+    nil
+  end
+
   # Generates a usable error embed with defaults.
   def self.error_embed(error: nil, footer: nil, colour: nil, color: nil)
     raise 'Invalid arguments for Helper.error_embed!' if error.nil? || footer.nil?
