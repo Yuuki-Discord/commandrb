@@ -7,30 +7,43 @@ class TextFormat
   # The format for the current argument.
   @format = nil
 
-  # Parses a text command to have formatting, similar to slash commands.
-  # @param [Discordrb::CommandBot] bot The bot handling this message.
-  # @param [String] args Contents of the message.
-  # @param [Hash{Symbol => Hash}] arg_format A hash describing arguments expected for a symbol.
-  # @return [Hash{Symbol => Object}] A hash mapping an argument's symbol to its value.
-  def self.derive_arguments(bot, args, arg_format)
-    return nil if arg_format.nil? || args.nil?
+  # The bot handling this message.
+  @bot = nil
 
+  # The argument content to parse for this message.
+  @reader = nil
+
+  # A hash of argument name => formatting.
+  # @return [Hash[Symbol => Hash]]
+  @all_formats = nil
+
+  # Creates a TextFormat object to derive arguments.
+  # @param [Discordrb::Bot] bot The bot handling this message.
+  # @param [String] args The string of arguments to this command.
+  # @param [Hash{Symbol => Hash}] arg_format An array of argument formats.
+  def initialize(bot, args, arg_format)
+    @bot = bot
     # Hand off reading to our custom class.
-    reader = TextReader.new args
+    @reader = TextReader.new args unless args.nil?
+    @all_formats = arg_format unless arg_format.nil?
+  end
 
-    # We may have to iterate through multiple arguments at a time for a type.
+  # Parses a text command to have formatting, similar to slash commands.
+  # @return [ArgumentHash{Symbol => Object}] A hash mapping an argument's symbol to its value.
+  def derive_arguments
+    # Return an ArgumentHash for dot-notation access.
     result_args = ArgumentHash.new
 
-    arg_format.each do |symbol, format|
+    @all_formats.each do |symbol, format|
       @format = format
       arg_type = @format[:type]
 
       # Determine the argument contents for the type.
       # Only for :remaining we call read_remaining.
       current_arg = if arg_type == :remaining
-                      reader.read_remaining
+                      @reader.read_remaining
                     else
-                      reader.next_arg
+                      @reader.next_arg
                     end
 
       # If there are no more arguments...
@@ -58,9 +71,9 @@ class TextFormat
                   when :boolean
                     parse_boolean current_arg
                   when :user
-                    parse_user bot, current_arg
+                    parse_user current_arg
                   when :channel
-                    parse_channel bot, current_arg
+                    parse_channel current_arg
                   else
                     format_error 'Unimplemented type given!'
                   end
@@ -78,7 +91,7 @@ class TextFormat
   # Parses a boolean value from a string.
   # @raise [FormatError] if the given boolean is not a boolean value
   # @return [Bool] The parsed boolean value.
-  def self.parse_boolean(boolean)
+  def parse_boolean(boolean)
     case boolean
     when 'yes', 'true', '1'
       true
@@ -90,12 +103,11 @@ class TextFormat
   end
 
   # Finds a channel from a string.
-  # @param [Discordrb::Commands::CommandBot] bot The bot handling this message.
   # @param [String] given_channel The channel to parse.
   # @raise [FormatError] if the given channel does not pass validation
   # @return [Discordrb::Channel] The determined channel.
-  def self.parse_channel(bot, given_channel)
-    arg_value = Helper.channel_parse(bot, given_channel)
+  def parse_channel(given_channel)
+    arg_value = Helper.channel_parse(@bot, given_channel)
     format_error 'No channel given or found!' if arg_value.nil?
     arg_value
   end
@@ -104,7 +116,7 @@ class TextFormat
   # @param [String] integer The integer to parse.
   # @raise [FormatError] if the given integer does not pass validation
   # @return [Integer] The parsed integer value.
-  def self.parse_integer(integer)
+  def parse_integer(integer)
     # TODO: implement bounds checks
     Integer(integer)
   rescue ArgumentError
@@ -115,7 +127,7 @@ class TextFormat
   # @param [String] number The number to parse.
   # @raise [FormatError] if the given number does not pass validation
   # @return [Float] The parsed numerical value.
-  def self.parse_number(number)
+  def parse_number(number)
     # TODO: implement bounds checks
     Float(number)
   rescue ArgumentError
@@ -126,7 +138,7 @@ class TextFormat
   # @param [String] string The string to validate.
   # @raise [FormatError] if the given value does not pass validation
   # @return [String] The determined string value.
-  def self.parse_string(string)
+  def parse_string(string)
     # TODO: fully implement bounds checks
 
     # An upper character limit may be specified.
@@ -138,12 +150,11 @@ class TextFormat
   end
 
   # Finds a user from a string.
-  # @param [Discordrb::Commands::CommandBot] bot The bot handling this message.
   # @param [String] given_user The user to parse.
   # @raise [FormatError] if the given user could not be resolved
   # @return [Discordrb::User] The determined user.
-  def self.parse_user(bot, given_user)
-    user = Helper.user_parse(bot, given_user)
+  def parse_user(given_user)
+    user = Helper.user_parse(@bot, given_user)
     format_error 'No user given or found!' if user.nil?
     user
   end
@@ -155,18 +166,19 @@ class TextFormat
   # @option choices [String] name The name of this choice value.
   # @option choices [String, Integer, Float] value The value of this choice.
   # @raise [FormatError] if the given value is not an applicable choice
-  def self.validate_choices(given_choice, choices)
+  def validate_choices(given_choice, choices)
+    found = false
     choices.each do |choice|
       # For text commands, we will allow both the name and internal value for backwards compat.
-      break if choice[:name] == given_choice || choice[:value] == given_choice
+      found = true if choice[:name] == given_choice || choice[:value] == given_choice
     end
 
-    format_error 'Invalid choice!'
+    format_error 'Invalid choice!' unless found
   end
 
   # Raises a formatting error for the current format.
   # @raise [FormatError] An error regarding the current format
-  def self.format_error(message)
+  def format_error(message)
     raise FormatError.new @format, message
   end
 end
