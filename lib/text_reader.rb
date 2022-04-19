@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'pry'
-
 # TextReader allows somewhat buffered argument parsing.
 # You can wrap a TextReader around a string and read through space-delimited arguments,
 # or allow it to parse segments within quotes.
@@ -54,7 +52,7 @@ class TextReader
       value = result[..index - 1]
       # Our new contents are the index to the end.
       result = result[index + 1..]
-      result = result.strip!
+      result = result.strip
     end
 
     @contents = result
@@ -71,9 +69,9 @@ class TextReader
     if index.nil?
       value = @contents
     else
-      value = @contents[..index]
+      value = @contents[..index - 1]
       # Update our contents to reflect we've read past this space.
-      @contents = @contents[index..].strip!
+      @contents = @contents[index + 1..].strip
     end
 
     value

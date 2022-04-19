@@ -31,13 +31,13 @@ class TextFormat
 
       # If there are no more arguments...
       if current_arg.nil?
-        # and we are an optional type, use the default.
+        # If we are an optional type, use the default.
         if format[:optional]
           result_args[symbol] = format[:default] if format[:default]
           break
         end
 
-        # Otherwise, we need to raise an error.
+        # We shouldn't be finished. Raise an error.
         # TODO: provide argument information, i.e. remaining commands?
         raise NotEnoughArgumentsError
       end
@@ -59,6 +59,13 @@ class TextFormat
         rescue ArgumentError
           raise FormatError.new arg_type, 'Invalid integer value!'
         end
+      when :number
+        # Similarly, double (er... float) values must be validated.
+        begin
+          arg_value = Float(current_arg)
+        rescue ArgumentError
+          raise FormatError.new arg_type, 'Invalid double value!'
+        end
       when :boolean
         # Attempt to determine common boolean representations.
         case current_arg
@@ -75,6 +82,17 @@ class TextFormat
         raise FormatError.new arg_type, 'No user given or found!' if arg_value.nil?
       else
         raise FormatError.new arg_type, 'Unimplemented type given!'
+      end
+
+      # If we have choices, we must now validate them.
+      if format[:choices]
+        valid = false
+        format[:choices].each do |choice|
+          # For text commands, we will allow both the name and internal value for backwards compat.
+          valid = true if choice[:name] == arg_value || choice[:value] == arg_value
+        end
+
+        raise FormatError.new arg_type, 'Invalid choice!' unless valid
       end
 
       # Set the obtained value.

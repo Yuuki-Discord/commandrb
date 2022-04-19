@@ -50,6 +50,18 @@ class CommandrbBot
         type = format[:type]
         raise "#{name} has #{arg_name} with invalid argument type #{type}!" unless ARGUMENT_TYPES
 
+        if format.key? :choices
+          unless %i[string integer number].include?(type)
+            # Choices are only available on string, integer, or number types.
+            raise "#{name} has #{arg_name} with #{type} that cannot contain choices!"
+          end
+
+          if format[:choices].length > 25
+            # Ensure choices are within range.
+            raise "#{name} has #{arg_name} with more than 25 choices!"
+          end
+        end
+
         # Once we've seen an optional arg, all args past it must be optional.
         is_optional = format[:optional] || false
         if seen_optional && !is_optional
