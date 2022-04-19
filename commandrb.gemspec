@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.homepage =
     'https://github.com/Yuuki-Discord/commandrb'
   s.license = 'MIT'
-  s.add_runtime_dependency 'discordrb', '~> 3.1', '>= 3.1.0'
+  s.add_runtime_dependency 'discordrb', '~> 3.3', '>= 3.3.0'
   s.metadata = {
     'rubygems_mfa_required' => 'true'
   }

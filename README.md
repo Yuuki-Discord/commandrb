@@ -7,8 +7,8 @@ However, feel free to use it if you want, just don't be surprised when it doesn'
 # Creating a bot with Commandrb
 
 ## Requirements
-- Ruby 2.4+ (2.6+ is recommended)
-- [discordrb](https://github.com/discordrb/discordrb) 3.0+
+- Ruby 3.0+
+- [discordrb](https://github.com/shardlab/discordrb) 3.3+
 
 ## Install
 You can do this by one of two ways:
@@ -37,11 +37,9 @@ cbot = CommandrbBot.new(
     }
 )
 
-cbot.add_command(:ping, 
-  code: proc { |event,args|
-    event.respond('Pong!')
-  }
-)
+cbot.add_command(:ping) do |event, args|
+  event.respond('Pong!')
+end
 
 cbot.bot.run
 ```
