@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require 'pry'
-require_relative 'format'
+require 'discordrb'
+require_relative 'text_format'
 require_relative 'helper'
 
+# CommandrbBot manages prefixes and command registration for a bot.
 class CommandrbBot
   # The loaded configuration. It is safe to adjust this during runtime.
   attr_accessor :config
@@ -27,6 +28,8 @@ class CommandrbBot
   #   to signify a long-running command.
   # @option attributes [Bool] :server_only (false) Whether the
   #   command should only be run in servers and not be available in DMs.
+  # @option attributes [Hash[Symbol => Object]] :arg_format (nil) A format specifying
+  #   how arguments for this command should be registered and parsed.
   # @option attributes [Bool] :owners_only (false) Whether this command
   #   should only be run by bot owners.
   # @option attributes [Bool] :owner_override (false) Whether channel
@@ -74,7 +77,6 @@ class CommandrbBot
     @config = init_hash
 
     # Load sane defaults for options that aren't specified.
-
     @config[:typing_default] = false if @config[:typing_default].nil?
     @config[:delete_activators] = false if @config[:delete_activators].nil?
 
@@ -188,7 +190,7 @@ class CommandrbBot
 
       # If the command is only for use in servers, display error and abort.
       if chosen_command[:server_only] && event.channel.private?
-        event.channel.send_embed error_embed(
+        event.channel.send_embed Helper.error_embed(
           error: 'This command can only be used in servers!',
           footer: "Command: `#{command_run}`"
         )
@@ -207,11 +209,6 @@ class CommandrbBot
       # If the config is setup to show typing messages, then do so.
       event.channel.start_typing if chosen_command[:typing]
 
-      # Our arguments are the message's contents, minus the activator.
-      args = message_content
-      args.slice! chosen_activator
-      args = args.split
-
       no_permission = false
 
       chosen_command[:required_permissions]&.each do |x|
@@ -220,7 +217,7 @@ class CommandrbBot
           next
         end
 
-        event.channel.send_embed '', error_embed(
+        event.channel.send_embed '', Helper.error_embed(
           error: "You don't have permission for that!\nPermission required: `#{x}`",
           footer: "Command: `#{command_run}`"
         )
@@ -235,13 +232,23 @@ class CommandrbBot
       puts "[DEBUG] Command being processed: '#{chosen_command}'" if @debug_mode == true
       puts "[DEBUG] Owners only? #{chosen_command[:owners_only]}" if @debug_mode == true
       if chosen_command[:owners_only] && !owner?(event.user.id)
-        event.channel.send_embed '', error_embed(
+        event.channel.send_embed '', Helper.error_embed(
           error: "You don't have permission for that!\n"\
                  'Only owners are allowed to access this command.',
           footer: "Command: `#{command_run}`"
         )
         next
       end
+
+      # Handle arguments accordingly.
+      args = message_content.delete_prefix chosen_activator
+      args = if chosen_command[:arg_format].nil?
+               # Our arguments are the message's contents, minus the activator.
+               args.split
+             else
+               # We rely on the command's specified formatting for parsing.
+               TextFormat.derive_arguments(args, chosen_command[:arg_format])
+             end
 
       # Run the command code!
       # TODO: determine a good method to log other errors as made via the command.

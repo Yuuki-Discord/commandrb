@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
-class CommandrbBot
+require 'discordrb'
+
+# Helper provides several common functions performed throughout the codebase.
+class Helper
   # Utilizes several methods to attempt to determine a user.
   # @param [String] context Context to assist with matching a user by ID or name.
   # @return [Discordrb::User, nil] The user in question, or nil if the user could not be determined.
-  def user_parse(context)
+  def self.user_parse(context)
     # Can't do anything if there's nothing to begin with.
     return nil if context.nil?
 
@@ -26,7 +29,7 @@ class CommandrbBot
   end
 
   # Generates a usable error embed with defaults.
-  def error_embed(error: nil, footer: nil, colour: nil, color: nil)
+  def self.error_embed(error: nil, footer: nil, colour: nil, color: nil)
     raise 'Invalid arguments for Helper.error_embed!' if error.nil? || footer.nil?
 
     colour = 0xFA0E30 if color.nil? && colour.nil?
@@ -39,7 +42,7 @@ class CommandrbBot
   end
 
   # Generates a usable error embed with defaults, and a formatted error.
-  def code_embed(error: nil, footer: nil, colour: nil, color: nil)
+  def self.code_embed(error: nil, footer: nil, colour: nil, color: nil)
     raise 'Invalid arguments for Helper.code_embed!' if error.nil? || footer.nil?
 
     # Format to have a code block with formatting.

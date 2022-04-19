@@ -17,9 +17,6 @@ Metrics/MethodLength:
 Metrics/ModuleLength:
   Enabled: false
 
-Style/Documentation:
-  Enabled: false
-
 Layout/EndOfLine:
   EnforcedStyle: lf
 
