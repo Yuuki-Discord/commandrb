@@ -1,0 +1,272 @@
+# ArgumentHash is a special type of hash, allowing dot-notation access of keys.
+# This allows hash.key to be equivalent to hash[:key].
+class ArgumentHash < Hash
+  # We want to handle all available keys.
+  # 
+  # _@param_ `name` — Name of method.
+  # 
+  # _@return_ — whether we want to handle this name
+  def respond_to_missing?: (Symbol name) -> bool
+
+  # Default handler for non-existent methods.
+  # In this case, we use it to permit dot notation key lookup.
+  # 
+  # _@param_ `name` — Name of the invoked method.
+  # 
+  # _@param_ `args` — Passed arguments for the method. As we wish to only handle keys, this should always be empty.
+  # 
+  # _@return_ — Value of the key by the given name.
+  def method_missing: (Symbol name, *::Array[Object] args) -> Object
+end
+
+# FormatError is an error type thrown throughout argument parsing.
+class FormatError < RuntimeError
+  # sord omit - no YARD type given for "arg_format", using untyped
+  # sord omit - no YARD type given for "msg", using untyped
+  # Creates a FormatError for the given argument type.
+  def initialize: (untyped arg_format, untyped msg) -> void
+
+  # sord omit - no YARD type given for :arg_format, using untyped
+  # Returns the value of attribute arg_format.
+  attr_reader arg_format: untyped
+
+  # sord omit - no YARD type given for :"Hash[]", using untyped
+  attr_accessor Hash[]: untyped
+end
+
+# NotEnoughArgumentsError can be raised when there are not enough arguments
+# given to fully process a command.
+class NotEnoughArgumentsError < RuntimeError
+end
+
+# Helper provides several common functions performed throughout the codebase.
+class Helper
+  # sord warn - Discordrb::Bot wasn't able to be resolved to a constant in this project
+  # sord warn - Discordrb::User wasn't able to be resolved to a constant in this project
+  # Utilizes several methods to attempt to determine a user.
+  # 
+  # _@param_ `bot` — The bot handling this message.
+  # 
+  # _@param_ `context` — Context to assist with matching a user by ID or name.
+  # 
+  # _@return_ — The user in question, or nil if the user could not be determined.
+  def self.user_parse: (Discordrb::Bot _bot, String context) -> Discordrb::User?
+
+  # sord warn - Discordrb::Bot wasn't able to be resolved to a constant in this project
+  # sord warn - Discordrb::Channel wasn't able to be resolved to a constant in this project
+  # Utilizes several methods to attempt to determine a channel.
+  # 
+  # _@param_ `bot` — The bot handling this message.
+  # 
+  # _@param_ `context` — Context to assist with matching a channel by ID or name.
+  # 
+  # _@return_ — The channel in question,
+  # or nil if the channel could not be determined.
+  def self.channel_parse: (Discordrb::Bot _bot, String context) -> Discordrb::Channel
+
+  # sord warn - Discordrb::Webhooks::Embed wasn't able to be resolved to a constant in this project
+  # Generates a usable error embed with defaults.
+  # 
+  # _@param_ `error` — Ruby error to display in the embed.
+  # 
+  # _@param_ `footer` — Footer contents.
+  # 
+  # _@param_ `colour` — The colour to set for this embed.
+  # 
+  # _@param_ `color` — The color to set for this embed.
+  # 
+  # _@return_ — an embed for this error
+  def self.error_embed: (
+                          ?error: String?,
+                          ?footer: String?,
+                          ?colour: Integer?,
+                          ?color: Integer?
+                        ) -> Discordrb::Webhooks::Embed
+
+  # sord warn - Discordrb::Webhooks::Embed wasn't able to be resolved to a constant in this project
+  # Generates a usable error embed with defaults, and a formatted error.
+  # 
+  # _@param_ `error` — Ruby error to display in the embed.
+  # 
+  # _@param_ `footer` — Footer contents.
+  # 
+  # _@param_ `colour` — The colour to set for this embed.
+  # 
+  # _@param_ `color` — The color to set for this embed.
+  # 
+  # _@return_ — an embed for this error
+  def self.code_embed: (
+                         ?error: String?,
+                         ?footer: String?,
+                         ?colour: Integer?,
+                         ?color: Integer?
+                       ) -> Discordrb::Webhooks::Embed
+end
+
+# CommandrbBot manages prefixes and command registration for a bot.
+class CommandrbBot
+  # sord warn - Discordrb::Events wasn't able to be resolved to a constant in this project
+  # Registers a command with the command handler.
+  # 
+  # _@param_ `name` — The name of the command to run.
+  # 
+  # _@param_ `attributes` — Options about the command.
+  def add_command: (String name, ?::Hash[untyped, untyped] attributes) ?{ () -> Discordrb::Events } -> void
+
+  # Removes a registered command for the given name.
+  # 
+  # _@param_ `name` — The name of the registered command.
+  # 
+  # _@return_ — Whether the command was removed.
+  def remove_command: (String name) -> bool
+
+  # Determines whether the given ID is an owner.
+  # 
+  # By defining this separately, we allow you to overwrite it and use your own owner list.
+  # Your checks will instead be run by commandrb and allow you to use :owner_only as normal.
+  # 
+  # _@param_ `id` — ID of the user to check against.
+  # 
+  # _@return_ — whether the user is an owner of the bot
+  def owner?: (Integer id) -> bool
+
+  # Initializes Commandrb for the given token and credentials.
+  # 
+  # _@param_ `init_hash` — Attributes for the bot to use.
+  def initialize: (::Hash[untyped, untyped] init_hash) -> void
+
+  # sord omit - no YARD type given for :config, using untyped
+  # The loaded configuration. It is safe to adjust this during runtime.
+  attr_accessor config: untyped
+
+  # sord omit - no YARD type given for :bot, using untyped
+  # Needed to run the bot, or create custom events.
+  attr_accessor bot: untyped
+
+  # sord omit - no YARD type given for :commands, using untyped
+  # A store of registered commands. You can manipulate this throughout runtime.
+  attr_accessor commands: untyped
+
+  # sord omit - no YARD type given for :prefixes, using untyped
+  # A list of global prefixes. It is not recommended to change this while the bot is running.
+  attr_accessor prefixes: untyped
+end
+
+# TextFormat implements parsing arguments for text-based commands.
+class TextFormat
+  # sord warn - Discordrb::Events::MessageEvent wasn't able to be resolved to a constant in this project
+  # Creates a TextFormat object to derive arguments.
+  # 
+  # _@param_ `event` — The event for this message.
+  # 
+  # _@param_ `args` — The string of arguments to this command.
+  # 
+  # _@param_ `arg_format` — An array of argument formats.
+  def initialize: (Discordrb::Events::MessageEvent event, String args, ::Hash[Symbol, ::Hash[untyped, untyped]] arg_format) -> void
+
+  # Parses a text command to have formatting, similar to slash commands.
+  # 
+  # _@return_ — A hash mapping an argument's symbol to its value.
+  def derive_arguments: () -> ArgumentHash[Symbol, Object]
+
+  # Parses a boolean value from a string.
+  # 
+  # _@param_ `boolean` — The boolean value to parse.
+  # 
+  # _@return_ — The parsed boolean value.
+  def parse_boolean: (String boolean) -> bool
+
+  # sord warn - Discordrb::Channel wasn't able to be resolved to a constant in this project
+  # Finds a channel from a string.
+  # 
+  # _@param_ `given_channel` — The channel to parse.
+  # 
+  # _@return_ — The determined channel.
+  def parse_channel: (String given_channel) -> Discordrb::Channel
+
+  # Parses an integer value from a string.
+  # 
+  # _@param_ `integer` — The integer to parse.
+  # 
+  # _@return_ — The parsed integer value.
+  def parse_integer: (String integer) -> Integer
+
+  # Parses a number (i.e. float) value from a string
+  # 
+  # _@param_ `number` — The number to parse.
+  # 
+  # _@return_ — The parsed numerical value.
+  def parse_number: (String number) -> Float
+
+  # Validates a string from the given parameters.
+  # 
+  # _@param_ `string` — The string to validate.
+  # 
+  # _@return_ — The determined string value.
+  def parse_string: (String string) -> String
+
+  # sord warn - Discordrb::User wasn't able to be resolved to a constant in this project
+  # Finds a user from a string.
+  # 
+  # _@param_ `given_user` — The user to parse.
+  # 
+  # _@return_ — The determined user.
+  def parse_user: (String given_user) -> Discordrb::User
+
+  # Validates whether a given choice is a valid choice.
+  # 
+  # _@param_ `given_choice` — The choice given by the user.
+  # 
+  # _@param_ `choices` — Available choices per the registered command.
+  def validate_choices: ((String | Integer | Float) given_choice, ::Array[::Hash[untyped, untyped]] choices) -> void
+
+  # Raises a formatting error for the current format.
+  # 
+  # _@param_ `message` — Message to describe the format error.
+  def format_error: (String message) -> void
+
+  # Determines the default value for the current format.
+  # 
+  # _@return_ — Default value specified for the format.
+  def determine_default: () -> Object
+end
+
+# TextReader allows somewhat buffered argument parsing.
+# You can wrap a TextReader around a string and read through space-delimited arguments,
+# or allow it to parse segments within quotes.
+class TextReader
+  # Creates a new TextReader for the given string.
+  # 
+  # _@param_ `contents` — String to wrap
+  # 
+  # _@return_ — new reader
+  def initialize: (String contents) -> void
+
+  # Reads until the next space-delimited argument, or quote-enclosed string.
+  # 
+  # _@return_ — Argument contents, or nil if arguments have been exhausted
+  def next_arg: () -> String?
+
+  # Determines whether our current contents begin with a quotation mark,
+  # implying a variable length argument.
+  # 
+  # _@return_ — if the string begins with a quotation mark
+  def quotation?: () -> bool
+
+  # Reads until the end of a quotation mark.
+  # If no closing quotation mark is found, it reads until the end of the given contents.
+  # 
+  # _@return_ — Argument contents
+  def read_quotation: () -> String
+
+  # Reads until the next space-delimited argument.
+  # If no ending space is found, it reads until the end of the given contents.
+  # 
+  # _@return_ — Argument contents
+  def read_space_delimiter: () -> String
+
+  # Reads the remaining text stored.
+  # 
+  # _@return_ — Argument contents
+  def read_remaining: () -> String
+end

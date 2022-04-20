@@ -10,6 +10,7 @@ group :development, optional: true do
   gem 'rcodetools'
   gem 'rubocop'
   gem 'rubocop-rake'
+  gem 'sord'
   gem 'yard'
 end
 

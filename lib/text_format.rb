@@ -89,6 +89,7 @@ class TextFormat
   end
 
   # Parses a boolean value from a string.
+  # @param [String] boolean The boolean value to parse.
   # @raise [FormatError] if the given boolean is not a boolean value
   # @return [Bool] The parsed boolean value.
   def parse_boolean(boolean)
@@ -166,6 +167,7 @@ class TextFormat
   # @option choices [String] name The name of this choice value.
   # @option choices [String, Integer, Float] value The value of this choice.
   # @raise [FormatError] if the given value is not an applicable choice
+  # @return [void]
   def validate_choices(given_choice, choices)
     found = false
     choices.each do |choice|
@@ -177,7 +179,9 @@ class TextFormat
   end
 
   # Raises a formatting error for the current format.
+  # @param [String] message Message to describe the format error.
   # @raise [FormatError] An error regarding the current format
+  # @return [void]
   def format_error(message)
     raise FormatError.new @format, message
   end

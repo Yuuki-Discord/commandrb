@@ -38,6 +38,7 @@ class CommandrbBot
   # @yieldreturn [Discordrb::Events] The event corresponding to this command invocation.
   # @yieldreturn [Array<String>] Arguments run alongside the command.
   # @yieldreturn [String] The full contents of the invoking message.
+  # @return [void]
   def add_command(name, attributes = {}, &block)
     raise "Command #{name} has no block specified!" if block.nil?
 
@@ -105,10 +106,10 @@ class CommandrbBot
   # @option init_hash [String] :token A bot token provided by Discord.
   # @option init_hash [Integer] :client_id The client ID for this bot as provided by Discord.
   # @option init_hash [Array<Integer>] :owners An array of owners for :owner_only commands.
-  # @option init_hash [Boolean] :typing_default (false) Whether to begin typing upon
+  # @option init_hash [Bool] :typing_default (false) Whether to begin typing upon
   #   command invocation.
-  # @option init_hash [Boolean] :delete_activators (false) Whether to delete the invocation message.
-  # @option init_hash [Boolean] :parse_bots (false) Whether to respond to messages from other bots.
+  # @option init_hash [Bool] :delete_activators (false) Whether to delete the invocation message.
+  # @option init_hash [Bool] :parse_bots (false) Whether to respond to messages from other bots.
   def initialize(init_hash)
     @debug_mode = ENV['COMMANDRB_MODE'] == 'debug'
 

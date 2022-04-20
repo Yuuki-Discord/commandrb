@@ -32,7 +32,7 @@ class Helper
   # Utilizes several methods to attempt to determine a channel.
   # @param [Discordrb::Bot] bot The bot handling this message.
   # @param [String] context Context to assist with matching a channel by ID or name.
-  # @return [Discordrb::Channel, nil] The channel in question,
+  # @return [Discordrb::Channel] The channel in question,
   #   or nil if the channel could not be determined.
   def self.channel_parse(bot, context)
     # Can't do anything if there's nothing to begin with.
@@ -56,6 +56,11 @@ class Helper
   end
 
   # Generates a usable error embed with defaults.
+  # @param [String] error Ruby error to display in the embed.
+  # @param [String] footer Footer contents.
+  # @param [Integer] colour The colour to set for this embed.
+  # @param [Integer] color The color to set for this embed.
+  # @return [Discordrb::Webhooks::Embed] an embed for this error
   def self.error_embed(error: nil, footer: nil, colour: nil, color: nil)
     raise 'Invalid arguments for Helper.error_embed!' if error.nil? || footer.nil?
 
@@ -69,6 +74,11 @@ class Helper
   end
 
   # Generates a usable error embed with defaults, and a formatted error.
+  # @param [String] error Ruby error to display in the embed.
+  # @param [String] footer Footer contents.
+  # @param [Integer] colour The colour to set for this embed.
+  # @param [Integer] color The color to set for this embed.
+  # @return [Discordrb::Webhooks::Embed] an embed for this error
   def self.code_embed(error: nil, footer: nil, colour: nil, color: nil)
     raise 'Invalid arguments for Helper.code_embed!' if error.nil? || footer.nil?
 
