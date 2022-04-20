@@ -21,17 +21,15 @@ end
 
 # FormatError is an error type thrown throughout argument parsing.
 class FormatError < RuntimeError
-  # sord omit - no YARD type given for "arg_format", using untyped
-  # sord omit - no YARD type given for "msg", using untyped
   # Creates a FormatError for the given argument type.
-  def initialize: (untyped arg_format, untyped msg) -> void
+  # 
+  # _@param_ `arg_format` — An array of formatting arguments used to parse values.
+  # 
+  # _@param_ `msg` — The contents of this error.
+  def initialize: (::Array[::Hash[untyped, untyped]] arg_format, String msg) -> void
 
-  # sord omit - no YARD type given for :arg_format, using untyped
-  # Returns the value of attribute arg_format.
-  attr_reader arg_format: untyped
-
-  # sord omit - no YARD type given for :"Hash[]", using untyped
-  attr_accessor Hash[]: untyped
+  # _@return_ — the format related to this error.
+  attr_reader arg_format: ::Array[::Hash[untyped, untyped]]
 end
 
 # NotEnoughArgumentsError can be raised when there are not enough arguments
@@ -105,13 +103,15 @@ end
 
 # CommandrbBot manages prefixes and command registration for a bot.
 class CommandrbBot
-  # sord warn - Discordrb::Events wasn't able to be resolved to a constant in this project
+  # sord warn - Discordrb::Events::MessageEvent wasn't able to be resolved to a constant in this project
   # Registers a command with the command handler.
   # 
   # _@param_ `name` — The name of the command to run.
   # 
   # _@param_ `attributes` — Options about the command.
-  def add_command: (String name, ?::Hash[untyped, untyped] attributes) ?{ () -> Discordrb::Events } -> void
+  # 
+  # _@param_ `arg_format` — An array of formatting arguments used to parse values.
+  def add_command: (String name, ?::Hash[untyped, untyped] attributes) ?{ (Discordrb::Events::MessageEvent event, ArgumentHash args, String message_contents) -> void } -> void
 
   # Removes a registered command for the given name.
   # 
@@ -161,8 +161,8 @@ class TextFormat
   # 
   # _@param_ `args` — The string of arguments to this command.
   # 
-  # _@param_ `arg_format` — An array of argument formats.
-  def initialize: (Discordrb::Events::MessageEvent event, String args, ::Hash[Symbol, ::Hash[untyped, untyped]] arg_format) -> void
+  # _@param_ `arg_format` — An array of formatting arguments used to parse values.
+  def initialize: (Discordrb::Events::MessageEvent event, String args, ::Array[::Hash[untyped, untyped]] arg_format) -> void
 
   # Parses a text command to have formatting, similar to slash commands.
   # 

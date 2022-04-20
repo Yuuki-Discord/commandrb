@@ -4,11 +4,12 @@
 # You can wrap a TextReader around a string and read through space-delimited arguments,
 # or allow it to parse segments within quotes.
 class TextReader
+  # @return [String] The contents managed by this reader.
   @contents = ''
 
   # Creates a new TextReader for the given string.
   # @param [String] contents String to wrap
-  # @return [TextReader] new reader
+  # @return [self] new reader
   def initialize(contents)
     @contents = contents
   end

@@ -29,15 +29,15 @@ class CommandrbBot
   #   to signify a long-running command.
   # @option attributes [Bool] :server_only (false) Whether the
   #   command should only be run in servers and not be available in DMs.
-  # @option attributes [Hash[Symbol => Object]] :arg_format (nil) A format specifying
-  #   how arguments for this command should be registered and parsed.
+  # @!macro arg_format
   # @option attributes [Bool] :owners_only (false) Whether this command
   #   should only be run by bot owners.
   # @option attributes [Bool] :owner_override (false) Whether channel
   #   permissions should be ignored because the user is a bot owner.
-  # @yieldreturn [Discordrb::Events] The event corresponding to this command invocation.
-  # @yieldreturn [Array<String>] Arguments run alongside the command.
-  # @yieldreturn [String] The full contents of the invoking message.
+  # @yieldparam [Discordrb::Events::MessageEvent] event The event corresponding
+  #   to this command invocation.
+  # @yieldparam [ArgumentHash] args Arguments run alongside the command.
+  # @yieldparam [String] message_contents The full contents of the invoking message.
   # @return [void]
   def add_command(name, attributes = {}, &block)
     raise "Command #{name} has no block specified!" if block.nil?

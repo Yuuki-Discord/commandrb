@@ -4,23 +4,23 @@ require_relative 'text_reader'
 
 # TextFormat implements parsing arguments for text-based commands.
 class TextFormat
-  # The format for the current argument.
+  # @return [Hash{Symbol => Object}] The format for the current argument.
   @format = nil
 
-  # The event for this message.
+  # @return [Discordrb::Events::MessageEvent] The event for this message.
   @event = nil
 
-  # The argument content to parse for this message.
+  # @return [TextReader] The argument content to parse for this message.
   @reader = nil
 
   # A hash of argument name => formatting.
-  # @return [Hash[Symbol => Hash]]
+  # @return [Hash{Symbol => Object}]
   @all_formats = nil
 
   # Creates a TextFormat object to derive arguments.
   # @param [Discordrb::Events::MessageEvent] event The event for this message.
   # @param [String] args The string of arguments to this command.
-  # @param [Hash{Symbol => Hash}] arg_format An array of argument formats.
+  # @!macro arg_format
   def initialize(event, args, arg_format)
     @event = event
     # Hand off reading to our custom class.
