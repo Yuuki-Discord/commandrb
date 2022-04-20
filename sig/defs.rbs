@@ -152,6 +152,20 @@ class CommandrbBot
   attr_accessor prefixes: untyped
 end
 
+# ArgFormat has functions related to argument format validation.
+class ArgFormat
+  # sord omit - no YARD return type given, using untyped
+  # Validates whether an array of arg_formats is valid.
+  # 
+  # _@param_ `arg_format` — An array of formatting arguments used to parse values.
+  def self.validate_arg_formats: (::Array[::Hash[untyped, untyped]] arg_format) -> untyped
+
+  # sord omit - no YARD type given for "format", using untyped
+  # sord omit - no YARD return type given, using untyped
+  # Validates whether the given argument format is valid.
+  def self.validate_arg_format: (untyped format) -> untyped
+end
+
 # TextFormat implements parsing arguments for text-based commands.
 class TextFormat
   # sord warn - Discordrb::Events::MessageEvent wasn't able to be resolved to a constant in this project

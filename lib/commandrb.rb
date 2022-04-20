@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'discordrb'
+require 'arg_format'
 require_relative 'format'
 require_relative 'helper'
 require_relative 'text_format'
@@ -43,34 +44,8 @@ class CommandrbBot
     raise "Command #{name} has no block specified!" if block.nil?
 
     if attributes.key? :arg_format
-      # Keep track of encountered optional arguments.
-      seen_optional = false
-
-      # Do an extremely brief check that all types are valid.
-      attributes[:arg_format].each do |arg_name, format|
-        type = format[:type]
-        raise "#{name} has #{arg_name} with invalid argument type #{type}!" unless ARGUMENT_TYPES
-
-        if format.key? :choices
-          unless %i[string integer number].include?(type)
-            # Choices are only available on string, integer, or number types.
-            raise "#{name} has #{arg_name} with #{type} that cannot contain choices!"
-          end
-
-          if format[:choices].length > 25
-            # Ensure choices are within range.
-            raise "#{name} has #{arg_name} with more than 25 choices!"
-          end
-        end
-
-        # Once we've seen an optional arg, all args past it must be optional.
-        is_optional = format[:optional] || false
-        if seen_optional && !is_optional
-          raise "#{name} has #{arg_name} marked as non-optional after previous optional type!"
-        end
-
-        seen_optional = true if is_optional
-      end
+      # Check that all types are valid.
+      ArgFormat.validate_arg_formats(attributes[:arg_format])
     end
 
     @commands[name.to_sym] = attributes
