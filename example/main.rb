@@ -7,8 +7,8 @@ Bundler.require(:default)
 
 cbot = CommandrbBot.new(
   {
-    token: ENV['COMMANDRB_TOKEN'],
-    client_id: ENV['COMMANDRB_CLIENTID'],
+    token: ENV.fetch('COMMANDRB_TOKEN', nil),
+    client_id: ENV.fetch('COMMANDRB_CLIENTID', nil),
     prefixes: ['!']
   }
 )

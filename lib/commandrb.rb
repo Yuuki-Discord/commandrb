@@ -108,7 +108,7 @@ class CommandrbBot
   # @option init_hash [Symbol] :type (:bot) The type of account to authenticate as.
   # @option init_hash [Proc] :ready A proc to invoke upon the gateway ready event.
   def initialize(init_hash)
-    @debug_mode = ENV['COMMANDRB_MODE'] == 'debug'
+    @debug_mode = ENV.fetch('COMMANDRB_MODE', nil) == 'debug'
 
     # Setup the variables for first use.
     @commands = {}
