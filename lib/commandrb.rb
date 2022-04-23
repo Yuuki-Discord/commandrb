@@ -148,13 +148,14 @@ class CommandrbBot
       message_content = event.message.content
       chosen_command = nil
 
-      # If we have a usable prefix, get the raw arguments for this command.
+      # Determine whether we have a usable prefix on this message.
       # Otherwise, do not continue processing.
       used_prefix = determine_prefix message_content
       next if used_prefix.nil?
 
       # Next, determine the command being run.
-      message_content = message_content.delete_prefix used_prefix
+      # We remove the length of the prefix in order to permit case-insensitivity.
+      message_content = message_content[used_prefix.length..]
 
       @commands.each do |name, command|
         puts ":: Considering #{name}" if @debug_mode == true
@@ -236,8 +237,9 @@ class CommandrbBot
       end
 
       # Handle arguments accordingly.
-      args = message_content.delete_prefix chosen_activator
-      args = args.strip
+      # We remove the length of the activator in order to permit case-insensitivity.
+      message_content = message_content[chosen_activator.length..]
+      args = message_content.strip
       args = if chosen_command[:arg_format].nil?
                # Our arguments are the message's contents, minus the activator.
                args.split
@@ -264,9 +266,9 @@ class CommandrbBot
   # @return [nil] If no prefix was present.
   def determine_prefix(message)
     @prefixes.each do |prefix|
-      next unless message.start_with?(prefix)
+      next unless message.downcase.start_with?(prefix.downcase)
 
-      return message.slice! prefix
+      return prefix
     end
 
     # It seems we could not find a prefix.
@@ -300,9 +302,9 @@ class CommandrbBot
     end
 
     triggers.each do |trigger|
-      activator = trigger.to_s
+      activator = trigger.to_s.downcase
       puts "Considering activator #{activator}" if @debug_mode == true
-      next unless message.start_with?(activator)
+      next unless message.downcase.start_with?(activator)
 
       puts "Prefix matched! #{activator}" if @debug_mode == true
 
