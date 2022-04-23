@@ -299,8 +299,6 @@ class CommandrbBot
       end
     end
 
-    puts triggers
-
     triggers.each do |trigger|
       activator = trigger.to_s
       puts "Considering activator #{activator}" if @debug_mode == true
