@@ -105,7 +105,6 @@ class CommandrbBot
   # @option init_hash [Bool] :parse_bots (false) Whether to respond to messages from other bots.
   # @option init_hash [Bool] :parse_self Whether the bot should respond to its own messages.
   # @option init_hash [Array<String>] :prefixes List of prefixes to respond to.
-  # @option init_hash [Symbol] :type (:bot) The type of account to authenticate as.
   # @option init_hash [Proc] :ready A proc to invoke upon the gateway ready event.
   def initialize(init_hash)
     @debug_mode = ENV.fetch('COMMANDRB_MODE', nil) == 'debug'
@@ -123,16 +122,12 @@ class CommandrbBot
 
     raise 'No token supplied in init hash!' if @config[:token].nil? || (init_hash[:token] == '')
 
-    init_type = @config[:type] || :bot
-    if init_type == :bot && init_hash[:client_id].nil?
-      raise 'No client ID or invalid client ID supplied in init hash!'
-    end
+    raise 'No client ID or invalid client ID supplied in init hash!' if init_hash[:client_id].nil?
 
     @bot = Discordrb::Bot.new(
       token: @config[:token],
       client_id: @config[:client_id],
-      parse_self: @config[:parse_self] == true,
-      type: @config[:type]
+      parse_self: @config[:parse_self] == true
     )
 
     unless init_hash[:ready].nil?
