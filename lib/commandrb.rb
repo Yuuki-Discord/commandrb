@@ -106,6 +106,8 @@ class CommandrbBot
   # @option init_hash [Bool] :parse_self Whether the bot should respond to its own messages.
   # @option init_hash [Array<String>] :prefixes List of prefixes to respond to.
   # @option init_hash [Proc] :ready A proc to invoke upon the gateway ready event.
+  # @option init_hash [Bool] :disable_text_commands (false) If true,
+  #   disables text-based command handling.
   def initialize(init_hash)
     @debug_mode = ENV.fetch('COMMANDRB_MODE', nil) == 'debug'
 
@@ -117,6 +119,7 @@ class CommandrbBot
     # Load sane defaults for options that aren't specified.
     @config[:typing_default] = false if @config[:typing_default].nil?
     @config[:delete_activators] = false if @config[:delete_activators].nil?
+    @config[:disable_text_commands] = false if @config[:disable_text_commands].nil?
     @config[:owners] = [] if @config[:owners].nil?
     @config[:parse_bots] = false if @config[:parse_bots].nil?
 
@@ -139,6 +142,8 @@ class CommandrbBot
 
     # Command processing
     @bot.message do |event|
+      next if @config[:disable_text_commands] == true
+
       chosen_activator = nil
       message_content = event.message.content
       chosen_command = nil
