@@ -31,12 +31,17 @@ class ArgFormat
     raise "Argument with #{type} lacks a name!" if name.nil?
     raise "#{name} has invalid argument type #{type}!" unless ARGUMENT_TYPES
 
-    # You cannot specify max_char if not string/remaining.
-    if !format[:max_char].nil? && !%i[string remaining].include?(type)
+    # Character constraints are unavailable if not string/remaining.
+    if (format.key? :max_char) && !%i[string remaining].include?(type)
       raise "#{name} cannot specify a maximum character length if it is not a string type!"
     end
 
+    if !(format.key? :group) && (format.key? :text_command)
+      raise "#{name} cannot specify text_command if it is not in a group!"
+    end
+
     return unless format.key? :choices
+
     # Ensure choices are sane.
     unless %i[string integer number].include?(type)
       # Choices are only available on string, integer, or number types.
@@ -44,8 +49,6 @@ class ArgFormat
     end
 
     # Ensure choices are within range.
-    return unless format[:choices].length > 25
-
-    raise "#{name} has more than 25 choices!"
+    raise "#{name} has more than 25 choices!" if format[:choices].length > 25
   end
 end

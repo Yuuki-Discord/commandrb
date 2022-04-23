@@ -135,6 +135,28 @@ class CommandrbBot
   # _@param_ `init_hash` — Attributes for the bot to use.
   def initialize: (::Hash[untyped, untyped] init_hash) -> void
 
+  # Determines the prefix used for the given message.
+  # 
+  # _@param_ `message` — The message to determine a prefix from.
+  # 
+  # _@return_ — The prefix used in this message.
+  # 
+  # _@return_ — If no prefix was present.
+  def determine_prefix: (untyped message) -> String
+
+  # Determines the best activator given a command.
+  # 
+  # _@param_ `name` — The name of the command being determined.
+  # 
+  # _@param_ `command` — The command to determine via.
+  # 
+  # _@param_ `message` — The message being parsed.
+  # 
+  # _@return_ — The activator used to invoke this command.
+  # 
+  # _@return_ — If no activator was present for the given command.
+  def determine_activator: (String name, ::Hash[untyped, untyped] command, String message) -> String
+
   # sord omit - no YARD type given for :config, using untyped
   # The loaded configuration. It is safe to adjust this during runtime.
   attr_accessor config: untyped

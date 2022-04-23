@@ -25,9 +25,27 @@ class CommandrbBot
   # @param [Hash] attributes Options about the command.
   # @option attributes [Bool] :delete_activator (false) Whether the
   #   invoking message should be deleted upon execution.
+  # @option attributes [Array<Symbol>] :required_permissions (nil)
+  #   An array of permissions the user must have to execute.
+  #   See {Discordrb::Permissions::FLAGS} for a complete list.
   # @option attributes [Bool] :typing (false) Whether the
   #   bot should start typing while executing a command, i.e.
   #   to signify a long-running command.
+  # @option attributes [Symbol] :group (nil) A group of commands.
+  #
+  #   For example, consider command "bar" in group "foo".
+  #   The resulting command would be "prefix!foo bar" for text-based commands,
+  #   or as a registered sub-command for interaction-based commands.
+  # @option attributes [Bool] :text_command (false) If the command is in a group,
+  #   this "flattens" the command for text-based invocations.
+  #   Via this, command "bar" in group "foo" would still be invoked as "prefix!bar".
+  #   This allows category of commands far too numerous for individual slash commands
+  #   to still function as individual commands.
+  # @option attributes [Array<String>] :triggers (command name) An array of
+  #   strings that can be used to invoke this command.
+  #
+  #   Note that if the command is present within a command group without text_subcommand,
+  #   triggers will be prefixed with the group.
   # @option attributes [Bool] :server_only (false) Whether the
   #   command should only be run in servers and not be available in DMs.
   # @!macro arg_format
@@ -85,40 +103,35 @@ class CommandrbBot
   #   command invocation.
   # @option init_hash [Bool] :delete_activators (false) Whether to delete the invocation message.
   # @option init_hash [Bool] :parse_bots (false) Whether to respond to messages from other bots.
+  # @option init_hash [Bool] :parse_self Whether the bot should respond to its own messages.
+  # @option init_hash [Array<String>] :prefixes List of prefixes to respond to.
+  # @option init_hash [Symbol] :type (:bot) The type of account to authenticate as.
+  # @option init_hash [Proc] :ready A proc to invoke upon the gateway ready event.
   def initialize(init_hash)
     @debug_mode = ENV['COMMANDRB_MODE'] == 'debug'
 
     # Setup the variables for first use.
     @commands = {}
-    @prefixes = []
+    @prefixes = init_hash[:prefixes] || []
     @config = init_hash
 
     # Load sane defaults for options that aren't specified.
     @config[:typing_default] = false if @config[:typing_default].nil?
     @config[:delete_activators] = false if @config[:delete_activators].nil?
+    @config[:owners] = [] if @config[:owners].nil?
+    @config[:parse_bots] = false if @config[:parse_bots].nil?
 
     raise 'No token supplied in init hash!' if @config[:token].nil? || (init_hash[:token] == '')
 
-    init_parse_self = begin
-      init_hash[:parse_self]
-    rescue StandardError
-      nil
-    end
-    init_type = @config[:type]
-
+    init_type = @config[:type] || :bot
     if init_type == :bot && init_hash[:client_id].nil?
       raise 'No client ID or invalid client ID supplied in init hash!'
     end
 
-    @config[:owners] = init_hash[:owners]
-    @config[:owners] = [] if @config[:owners].nil?
-
-    @prefixes = init_hash[:prefixes]
-
     @bot = Discordrb::Bot.new(
       token: @config[:token],
       client_id: @config[:client_id],
-      parse_self: init_parse_self,
+      parse_self: @config[:parse_self] == true,
       type: @config[:type]
     )
 
@@ -132,66 +145,38 @@ class CommandrbBot
     # Command processing
     @bot.message do |event|
       chosen_activator = nil
-      message_content = nil
+      message_content = event.message.content
       chosen_command = nil
-      used_prefix = ''
 
       # If we have a usable prefix, get the raw arguments for this command.
-      @prefixes.each do |prefix|
-        next unless event.message.content.start_with?(prefix)
+      # Otherwise, do not continue processing.
+      used_prefix = determine_prefix message_content
+      next if used_prefix.nil?
 
-        # Store the message's content, sans its prefix.
-        # Strip leading spaces in the event a prefix ends with a space.
-        message_content = event.message.content
-        used_prefix = message_content.slice! prefix
+      # Next, determine the command being run.
+      message_content = message_content.delete_prefix used_prefix
+
+      @commands.each do |name, command|
+        puts ":: Considering #{name}" if @debug_mode == true
+        chosen_activator = determine_activator name, command, message_content
+
+        puts "Result: #{chosen_activator}" if @debug_mode == true
+        next if chosen_activator.nil?
+
+        # As a valid activator was utilized, we will use this command.
+        chosen_command = command
         break
       end
 
-      # Otherwise, do not continue processing.
-      next if message_content.nil?
-
-      @commands.each do |key, command|
-        puts ":: Considering #{key}" if @debug_mode == true
-        triggers = command[:triggers].nil? ? [key.to_s] : command[:triggers]
-
-        triggers.each do |trigger|
-          activator = trigger.to_s.downcase
-          puts activator if @debug_mode == true
-          next unless event.message.content.downcase.start_with?(activator)
-
-          puts "Prefix matched! #{activator}" if @debug_mode == true
-
-          # Continue only if you've already chosen a choice.
-          if chosen_activator.nil?
-            puts 'First match obtained!' if @debug_mode == true
-            chosen_activator = activator
-            chosen_command = command
-
-            # If the new activator begins with the chosen one, then override it.
-            # Example: sh is chosen, shell is the new one.
-            # In this example, shell would override sh, preventing ugly bugs.
-          elsif activator.start_with?(chosen_activator)
-            puts "#{activator} just overrode #{chosen_activator}" if @debug_mode == true
-            chosen_activator = activator
-            chosen_command = command
-          # Otherwise, just give up.
-          elsif @debug_mode == true
-            puts 'Match failed...'
-          end
-          # If you haven't chosen yet, get choosing!
-        end
-
-        puts "Result: #{chosen_activator}" if @debug_mode == true
-      end
-
-      # If we have no chosen activator, it is likely the command does not exist
+      # If we have no chosen command, it is likely the command does not exist
       # or the prefix itself was run.
-      next if chosen_activator.nil?
+      next if chosen_command.nil?
 
       command_run = used_prefix + chosen_activator
       puts "Final result: #{command_run}" if @debug_mode == true
 
       # Command flag defaults
+      chosen_command[:parse_bots] = @config[:parse_bots] if chosen_command[:parse_bots].nil?
       chosen_command[:owners_only] = false if chosen_command[:owners_only].nil?
       chosen_command[:server_only] = false if chosen_command[:server_only].nil?
       chosen_command[:typing] = @config[:typing_default] if chosen_command[:typing_default].nil?
@@ -202,7 +187,6 @@ class CommandrbBot
       chosen_command[:owner_override] = false if chosen_command[:owner_override].nil?
 
       # If the settings are to delete activating messages, then do that.
-      # I'm *hoping* this doesn't cause issues with argument extraction.
       event.message.delete if chosen_command[:delete_activator]
 
       # If the command is only for use in servers, display error and abort.
@@ -214,14 +198,8 @@ class CommandrbBot
         break
       end
 
-      # If the user is a bot and the command is set to not pass bots
-      # OR the user is a bot and the global config is to not parse bots...
-      # ...then abort :3
-      if event.user.bot_account? && \
-         (chosen_command[:parse_bots] == false || @config[:parse_bots] == false)
-        # Abort!
-        break
-      end
+      # Abort if we should not parse bots.
+      break if event.user.bot_account? && chosen_command[:parse_bots] == false
 
       # If the config is setup to show typing messages, then do so.
       event.channel.start_typing if chosen_command[:typing]
@@ -229,10 +207,10 @@ class CommandrbBot
       no_permission = false
 
       chosen_command[:required_permissions]&.each do |x|
-        if event.user.on(event.server).permission?(x, event.channel) \
-          || (chosen_command[:owner_override] && @config[:owners].include?(event.user.id))
-          next
-        end
+        # No need to respect permissions if we have an owner override.
+        next if chosen_command[:owner_override] && @config[:owners].include?(event.user.id)
+
+        next if event.user.on(event.server).permission?(x, event.channel)
 
         event.channel.send_embed '', Helper.error_embed(
           error: "You don't have permission for that!\nPermission required: `#{x}`",
@@ -278,5 +256,75 @@ class CommandrbBot
       puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
       next
     end
+  end
+
+  # Determines the prefix used for the given message.
+  # @param message The message to determine a prefix from.
+  # @return [String] The prefix used in this message.
+  # @return [nil] If no prefix was present.
+  def determine_prefix(message)
+    @prefixes.each do |prefix|
+      next unless message.start_with?(prefix)
+
+      return message.slice! prefix
+    end
+
+    # It seems we could not find a prefix.
+    nil
+  end
+
+  # Determines the best activator given a command.
+  # @param [String] name The name of the command being determined.
+  # @param [Hash] command The command to determine via.
+  # @param [String] message The message being parsed.
+  # @return [String] The activator used to invoke this command.
+  # @return [nil] If no activator was present for the given command.
+  def determine_activator(name, command, message)
+    # Used to keep track of better activators throughout loop duration.
+    chosen_activator = nil
+
+    # If the command has no triggers, we only utilize its name.
+    triggers = if command[:triggers].nil?
+                 [name]
+               else
+                 command[:triggers]
+               end
+
+    # If this command is in a group and is not a text subcommand,
+    # its triggers must be prefixed with the group name.
+    if !command[:group].nil? && command[:text_subcommand] != true
+      group = command[:group].to_s
+      triggers.map! do |trigger|
+        "#{group} #{trigger}"
+      end
+    end
+
+    puts triggers
+
+    triggers.each do |trigger|
+      activator = trigger.to_s
+      puts "Considering activator #{activator}" if @debug_mode == true
+      next unless message.start_with?(activator)
+
+      puts "Prefix matched! #{activator}" if @debug_mode == true
+
+      # Continue only if you've already chosen a choice.
+      if chosen_activator.nil?
+        puts 'First match obtained!' if @debug_mode == true
+        chosen_activator = activator
+
+        # If the new activator begins with the chosen one, then override it.
+        # Example: sh is chosen, shell is the new one.
+        # In this example, shell would override sh, preventing ugly bugs.
+      elsif activator.start_with?(chosen_activator)
+        puts "#{activator} just overrode #{chosen_activator}" if @debug_mode == true
+        chosen_activator = activator
+        # Otherwise, just give up.
+      elsif @debug_mode == true
+        puts 'Match failed...'
+      end
+    end
+
+    chosen_activator
   end
 end
