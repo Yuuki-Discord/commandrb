@@ -229,7 +229,7 @@ class CommandrbBot
       puts "[DEBUG] Owners only? #{chosen_command[:owners_only]}" if @debug_mode == true
       if chosen_command[:owners_only] && !owner?(event.user.id)
         event.channel.send_embed '', Helper.error_embed(
-          error: "You don't have permission for that!\n"\
+          error: "You don't have permission for that!\n" \
                  'Only owners are allowed to access this command.',
           footer: "Command: `#{command_run}`"
         )
