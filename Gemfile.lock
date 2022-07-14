@@ -1,0 +1,114 @@
+GIT
+  remote: https://github.com/shardlab/discordrb.git
+  revision: 7c7865d7462a348e6a4171008322fda24634e437
+  specs:
+    discordrb (3.4.2)
+      discordrb-webhooks (~> 3.4.2)
+      ffi (>= 1.9.24)
+      opus-ruby
+      rest-client (>= 2.0.0)
+      websocket-client-simple (>= 0.3.0)
+    discordrb-webhooks (3.4.2)
+      rest-client (>= 2.0.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ast (2.4.2)
+    coderay (1.1.3)
+    commander (4.6.0)
+      highline (~> 2.0.0)
+    debase (0.2.5.beta2)
+      debase-ruby_core_source (>= 0.10.12)
+    debase-ruby_core_source (0.10.16)
+    domain_name (0.5.20190701)
+      unf (>= 0.0.5, < 1.0.0)
+    event_emitter (0.2.6)
+    fastri (0.3.1.1)
+    ffi (1.15.5)
+    highline (2.0.3)
+    http-accept (1.7.0)
+    http-cookie (1.0.5)
+      domain_name (~> 0.5)
+    json (2.6.2)
+    method_source (1.0.0)
+    mime-types (3.4.1)
+      mime-types-data (~> 3.2015)
+    mime-types-data (3.2022.0105)
+    netrc (0.11.0)
+    opus-ruby (1.0.1)
+      ffi
+    parallel (1.22.1)
+    parlour (5.0.0)
+      commander (~> 4.5)
+      parser
+      rainbow (~> 3.0)
+      sorbet-runtime (>= 0.5)
+    parser (3.1.2.0)
+      ast (~> 2.4.1)
+    pry (0.14.1)
+      coderay (~> 1.1)
+      method_source (~> 1.0)
+    rainbow (3.1.1)
+    rake (13.0.6)
+    rcodetools (0.8.5.0)
+    regexp_parser (2.5.0)
+    rest-client (2.1.0)
+      http-accept (>= 1.7.0, < 2.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 4.0)
+      netrc (~> 0.8)
+    rexml (3.2.5)
+    rubocop (1.31.2)
+      json (~> 2.3)
+      parallel (~> 1.10)
+      parser (>= 3.1.0.0)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.18.0, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 1.4.0, < 3.0)
+    rubocop-ast (1.19.1)
+      parser (>= 3.1.1.0)
+    rubocop-rake (0.6.0)
+      rubocop (~> 1.0)
+    ruby-debug-ide (0.7.3)
+      rake (>= 0.8.1)
+    ruby-progressbar (1.11.0)
+    sorbet-runtime (0.5.10158)
+    sord (3.0.1)
+      commander (~> 4.5)
+      parlour (~> 5.0)
+      sorbet-runtime
+      yard
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.8.2)
+    unicode-display_width (2.2.0)
+    webrick (1.7.0)
+    websocket (1.2.9)
+    websocket-client-simple (0.5.1)
+      event_emitter
+      websocket
+    yard (0.9.28)
+      webrick (~> 1.7.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  debase (~> 0.2.5.beta2)
+  discordrb!
+  fastri
+  pry
+  rainbow
+  rcodetools
+  rubocop
+  rubocop-rake
+  ruby-debug-ide
+  sord
+  yard
+
+BUNDLED WITH
+   2.3.15
