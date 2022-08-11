@@ -150,123 +150,128 @@ class CommandrbBot
     end
 
     # Command processing
+    return if @config[:disable_text_commands] == true
+
     @bot.message do |event|
-      next if @config[:disable_text_commands] == true
-
-      chosen_activator = nil
-      message_content = event.message.content
-      chosen_command = nil
-
-      # Determine whether we have a usable prefix on this message.
-      # Otherwise, do not continue processing.
-      used_prefix = determine_prefix message_content
-      next if used_prefix.nil?
-
-      # Next, determine the command being run.
-      # We remove the length of the prefix in order to permit case-insensitivity.
-      message_content = message_content[used_prefix.length..]
-
-      @commands.each do |name, command|
-        puts ":: Considering #{name}" if @debug_mode == true
-        chosen_activator = determine_activator name, command, message_content
-
-        puts "Result: #{chosen_activator}" if @debug_mode == true
-        next if chosen_activator.nil?
-
-        # As a valid activator was utilized, we will use this command.
-        chosen_command = command
-        break
-      end
-
-      # If we have no chosen command, it is likely the command does not exist
-      # or the prefix itself was run.
-      next if chosen_command.nil?
-
-      command_run = used_prefix + chosen_activator
-      puts "Final result: #{command_run}" if @debug_mode == true
-
-      # Command flag defaults
-      chosen_command[:parse_bots] = @config[:parse_bots] if chosen_command[:parse_bots].nil?
-      chosen_command[:owners_only] = false if chosen_command[:owners_only].nil?
-      chosen_command[:server_only] = false if chosen_command[:server_only].nil?
-      chosen_command[:typing] = @config[:typing_default] if chosen_command[:typing_default].nil?
-      if chosen_command[:delete_activator].nil?
-        chosen_command[:delete_activator] =
-          @config[:delete_activators]
-      end
-      chosen_command[:owner_override] = false if chosen_command[:owner_override].nil?
-
-      # If the settings are to delete activating messages, then do that.
-      event.message.delete if chosen_command[:delete_activator]
-
-      # If the command is only for use in servers, display error and abort.
-      if chosen_command[:server_only] && event.channel.private?
-        event.channel.send_embed Helper.error_embed(
-          error: 'This command can only be used in servers!',
-          footer: "Command: `#{command_run}`"
-        )
-        break
-      end
-
-      # Abort if we should not parse bots.
-      break if event.user.bot_account? && chosen_command[:parse_bots] == false
-
-      # If the config is setup to show typing messages, then do so.
-      event.channel.start_typing if chosen_command[:typing]
-
-      no_permission = false
-
-      chosen_command[:required_permissions]&.each do |x|
-        # No need to respect permissions if we have an owner override.
-        next if chosen_command[:owner_override] && @config[:owners].include?(event.user.id)
-
-        next if event.user.on(event.server).permission?(x, event.channel)
-
-        event.channel.send_embed '', Helper.error_embed(
-          error: "You don't have permission for that!\nPermission required: `#{x}`",
-          footer: "Command: `#{command_run}`"
-        )
-        no_permission = true
-        break
-      end
-
-      next if no_permission
-
-      # If the command is set to owners only and the user is not the owner,
-      # show an error and abort.
-      puts "[DEBUG] Command being processed: '#{chosen_command}'" if @debug_mode == true
-      puts "[DEBUG] Owners only? #{chosen_command[:owners_only]}" if @debug_mode == true
-      if chosen_command[:owners_only] && !owner?(event.user.id)
-        event.channel.send_embed '', Helper.error_embed(
-          error: "You don't have permission for that!\n" \
-                 'Only owners are allowed to access this command.',
-          footer: "Command: `#{command_run}`"
-        )
-        next
-      end
-
-      # Handle arguments accordingly.
-      # We remove the length of the activator in order to permit case-insensitivity.
-      message_content = message_content[chosen_activator.length..]
-      args = message_content.strip
-      args = if chosen_command[:arg_format].nil?
-               # Our arguments are the message's contents, minus the activator.
-               args.split
-             else
-               # We rely on the command's specified formatting for parsing.
-               format = TextFormat.new event, args, chosen_command[:arg_format]
-               format.derive_arguments
-             end
-
-      # Run the command code!
-      # TODO: determine a good method to log other errors as made via the command.
-      # Without, we will simply log to console.
-      chosen_command[:code].call(event, args, message_content)
-
-      # All done here.
-      puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
-      next
+      handle_text_command event
     end
+  end
+
+  # Handles evaluating logic for text commands.
+  # @param [Discordrb::MessageEvent] event The text command event to process.
+  def handle_text_command(event)
+    chosen_activator = nil
+    message_content = event.message.content
+    chosen_command = nil
+
+    # Determine whether we have a usable prefix on this message.
+    # Otherwise, do not continue processing.
+    used_prefix = determine_prefix message_content
+    return if used_prefix.nil?
+
+    # Next, determine the command being run.
+    # We remove the length of the prefix in order to permit case-insensitivity.
+    message_content = message_content[used_prefix.length..]
+
+    @commands.each do |name, command|
+      puts ":: Considering #{name}" if @debug_mode == true
+      chosen_activator = determine_activator name, command, message_content
+
+      puts "Result: #{chosen_activator}" if @debug_mode == true
+      next if chosen_activator.nil?
+
+      # As a valid activator was utilized, we will use this command.
+      chosen_command = command
+      break
+    end
+
+    # If we have no chosen command, it is likely the command does not exist
+    # or the prefix itself was run.
+    return if chosen_command.nil?
+
+    command_run = used_prefix + chosen_activator
+    puts "Final result: #{command_run}" if @debug_mode == true
+
+    # Command flag defaults
+    chosen_command[:parse_bots] = @config[:parse_bots] if chosen_command[:parse_bots].nil?
+    chosen_command[:owners_only] = false if chosen_command[:owners_only].nil?
+    chosen_command[:server_only] = false if chosen_command[:server_only].nil?
+    chosen_command[:typing] = @config[:typing_default] if chosen_command[:typing_default].nil?
+    if chosen_command[:delete_activator].nil?
+      chosen_command[:delete_activator] =
+        @config[:delete_activators]
+    end
+    chosen_command[:owner_override] = false if chosen_command[:owner_override].nil?
+
+    # If the settings are to delete activating messages, then do that.
+    event.message.delete if chosen_command[:delete_activator]
+
+    # If the command is only for use in servers, display error and abort.
+    if chosen_command[:server_only] && event.channel.private?
+      event.channel.send_embed Helper.error_embed(
+        error: 'This command can only be used in servers!',
+        footer: "Command: `#{command_run}`"
+      )
+      return
+    end
+
+    # Abort if we should not parse bots.
+    return if event.user.bot_account? && chosen_command[:parse_bots] == false
+
+    # If the config is setup to show typing messages, then do so.
+    event.channel.start_typing if chosen_command[:typing]
+
+    no_permission = false
+
+    chosen_command[:required_permissions]&.each do |x|
+      # No need to respect permissions if we have an owner override.
+      next if chosen_command[:owner_override] && @config[:owners].include?(event.user.id)
+
+      next if event.user.on(event.server).permission?(x, event.channel)
+
+      event.channel.send_embed '', Helper.error_embed(
+        error: "You don't have permission for that!\nPermission required: `#{x}`",
+        footer: "Command: `#{command_run}`"
+      )
+      no_permission = true
+      break
+    end
+
+    return if no_permission
+
+    # If the command is set to owners only and the user is not the owner,
+    # show an error and abort.
+    puts "[DEBUG] Command being processed: '#{chosen_command}'" if @debug_mode == true
+    puts "[DEBUG] Owners only? #{chosen_command[:owners_only]}" if @debug_mode == true
+    if chosen_command[:owners_only] && !owner?(event.user.id)
+      event.channel.send_embed '', Helper.error_embed(
+        error: "You don't have permission for that!\n" \
+               'Only owners are allowed to access this command.',
+        footer: "Command: `#{command_run}`"
+      )
+      return
+    end
+
+    # Handle arguments accordingly.
+    # We remove the length of the activator in order to permit case-insensitivity.
+    message_content = message_content[chosen_activator.length..]
+    args = message_content.strip
+    args = if chosen_command[:arg_format].nil?
+             # Our arguments are the message's contents, minus the activator.
+             args.split
+           else
+             # We rely on the command's specified formatting for parsing.
+             format = TextFormat.new event, args, chosen_command[:arg_format]
+             format.derive_arguments
+           end
+
+    # Run the command code!
+    # TODO: determine a good method to log other errors as made via the command.
+    # Without, we will simply log to console.
+    chosen_command[:code].call(event, args, message_content)
+
+    # All done here.
+    puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
   end
 
   # Determines the prefix used for the given message.
