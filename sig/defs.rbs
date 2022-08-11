@@ -111,14 +111,7 @@ class CommandrbBot
   # _@param_ `attributes` — Options about the command.
   # 
   # _@param_ `arg_format` — An array of formatting arguments used to parse values.
-  def add_command: (String name, ?::Hash[untyped, untyped] attributes) ?{ (Discordrb::Events::MessageEvent event, ArgumentHash args, String message_contents) -> void } -> void
-
-  # Removes a registered command for the given name.
-  # 
-  # _@param_ `name` — The name of the registered command.
-  # 
-  # _@return_ — Whether the command was removed.
-  def remove_command: (String name) -> bool
+  def add_command: (Symbol name, ?::Hash[untyped, untyped] attributes) ?{ (Discordrb::Events::MessageEvent event, ArgumentHash args, String message_contents) -> void } -> void
 
   # Determines whether the given ID is an owner.
   # 

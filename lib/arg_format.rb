@@ -40,6 +40,11 @@ class ArgFormat
       raise "#{name} cannot specify text_command if it is not in a group!"
     end
 
+    # Descriptions must be 100 characters or less.
+    raise "#{name} is missing a description!" unless format.key? :description
+
+    raise "#{name} has a description exceeding 100 characters!" if format[:description].length > 100
+
     return unless format.key? :choices
 
     # Ensure choices are sane.

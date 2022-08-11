@@ -21,7 +21,7 @@ class CommandrbBot
   attr_accessor :prefixes
 
   # Registers a command with the command handler.
-  # @param [String] name The name of the command to run.
+  # @param [Symbol] name The name of the command to run.
   # @param [Hash] attributes Options about the command.
   # @option attributes [Bool] :delete_activator (false) Whether the
   #   invoking message should be deleted upon execution.
@@ -41,6 +41,12 @@ class CommandrbBot
   #   Via this, command "bar" in group "foo" would still be invoked as "prefix!bar".
   #   This allows category of commands far too numerous for individual slash commands
   #   to still function as individual commands.
+  # @option attributes [Bool] :text_only (false) If set,
+  #   does not register as an interaction-based command.
+  # @option attributes [Symbol] :slash_trigger (default name) Overrides
+  #   the name of the interaction-based command for this command.
+  #   This is especially helpful for commands like 'help', which are polluted.
+  # @option attributes [String] :description A description of this command.
   # @option attributes [Array<String>] :triggers (command name) An array of
   #   strings that can be used to invoke this command.
   #
@@ -64,6 +70,21 @@ class CommandrbBot
     if attributes.key? :arg_format
       # Check that all types are valid.
       ArgFormat.validate_arg_formats(attributes[:arg_format])
+    end
+
+    # We need to enforce a description if not text-only.
+    unless attributes.key? :text_only
+      attributes[:text_only] = false
+
+      raise "#{name} is missing a command description!" unless attributes.key? :description
+
+      if attributes[:description] > 100
+        raise "#{name} has a command description exceeding 100 characters!"
+      end
+    end
+
+    if attributes[:text_only] && (attributes.key? :slash_trigger)
+      raise "#{name} is attempting to override a slash trigger on a text-only command!"
     end
 
     @commands[name.to_sym] = attributes
