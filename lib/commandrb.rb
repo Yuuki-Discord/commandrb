@@ -268,7 +268,7 @@ class CommandrbBot
     # Run the command code!
     # TODO: determine a good method to log other errors as made via the command.
     # Without, we will simply log to console.
-    chosen_command[:code].call(event, args, message_content)
+    chosen_command[:code].call(event, args)
 
     # All done here.
     puts "Finished!! Executed command: #{chosen_activator}" if @debug_mode == true
