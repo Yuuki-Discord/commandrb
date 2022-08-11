@@ -70,18 +70,6 @@ class CommandrbBot
     @commands[name.to_sym][:code] = block
   end
 
-  # Removes a registered command for the given name.
-  # @param [String] name The name of the registered command.
-  # @return [Bool] Whether the command was removed.
-  def remove_command(name)
-    begin
-      @commands.delete(name)
-    rescue StandardError
-      return false
-    end
-    true
-  end
-
   # Determines whether the given ID is an owner.
   #
   # By defining this separately, we allow you to overwrite it and use your own owner list.
