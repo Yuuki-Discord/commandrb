@@ -5,6 +5,7 @@ require 'arg_format'
 require_relative 'format'
 require_relative 'helper'
 require_relative 'text_format'
+require_relative 'slash_format'
 
 # CommandrbBot manages prefixes and command registration for a bot.
 class CommandrbBot
@@ -14,11 +15,15 @@ class CommandrbBot
   # Needed to run the bot, or create custom events.
   attr_accessor :bot
 
-  # A store of registered commands. You can manipulate this throughout runtime.
+  # A store of registered commands. Do not manipulate this throughout runtime.
   attr_accessor :commands
 
   # A list of global prefixes. It is not recommended to change this while the bot is running.
   attr_accessor :prefixes
+
+  # An interface to working with slash commands.
+  # @!return [SlashFormat]
+  attr_accessor :slash_format
 
   # Registers a command with the command handler.
   # @param [Symbol] name The name of the command to run.
@@ -78,7 +83,7 @@ class CommandrbBot
 
       raise "#{name} is missing a command description!" unless attributes.key? :description
 
-      if attributes[:description] > 100
+      if attributes[:description].length > 100
         raise "#{name} has a command description exceeding 100 characters!"
       end
     end
@@ -87,8 +92,15 @@ class CommandrbBot
       raise "#{name} is attempting to override a slash trigger on a text-only command!"
     end
 
+    # Register with text handler
     @commands[name.to_sym] = attributes
     @commands[name.to_sym][:code] = block
+
+    # Register with slash handler if not in group.
+    # (Group commands will be registered upon run to avoid duplicates.)
+    return unless attributes.key? :group
+
+    @slash_format.register_command(name.to_sym, @commands[name.to_sym])
   end
 
   # Determines whether the given ID is an owner.
@@ -150,6 +162,8 @@ class CommandrbBot
     end
 
     # Command processing
+    @slash_format = SlashFormat.new @bot
+
     return if @config[:disable_text_commands] == true
 
     @bot.message do |event|
