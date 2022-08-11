@@ -112,7 +112,6 @@ class CommandrbBot
   #   command invocation.
   # @option init_hash [Bool] :delete_activators (false) Whether to delete the invocation message.
   # @option init_hash [Bool] :parse_bots (false) Whether to respond to messages from other bots.
-  # @option init_hash [Bool] :parse_self Whether the bot should respond to its own messages.
   # @option init_hash [Array<String>] :prefixes List of prefixes to respond to.
   # @option init_hash [Proc] :ready A proc to invoke upon the gateway ready event.
   # @option init_hash [Bool] :disable_text_commands (false) If true,
@@ -139,7 +138,8 @@ class CommandrbBot
     @bot = Discordrb::Bot.new(
       token: @config[:token],
       client_id: @config[:client_id],
-      parse_self: @config[:parse_self] == true
+      parse_self: false,
+      ignore_bots: @config[:parse_bots] == false
     )
 
     unless init_hash[:ready].nil?
@@ -193,7 +193,6 @@ class CommandrbBot
     puts "Final result: #{command_run}" if @debug_mode == true
 
     # Command flag defaults
-    chosen_command[:parse_bots] = @config[:parse_bots] if chosen_command[:parse_bots].nil?
     chosen_command[:owners_only] = false if chosen_command[:owners_only].nil?
     chosen_command[:server_only] = false if chosen_command[:server_only].nil?
     chosen_command[:typing] = @config[:typing_default] if chosen_command[:typing_default].nil?
@@ -214,9 +213,6 @@ class CommandrbBot
       )
       return
     end
-
-    # Abort if we should not parse bots.
-    return if event.user.bot_account? && chosen_command[:parse_bots] == false
 
     # If the config is setup to show typing messages, then do so.
     event.channel.start_typing if chosen_command[:typing]
