@@ -53,6 +53,7 @@ class SlashFormat
 
       # Map our Array(Hash(:name, :key)) to a simple hash.
       if format.key? :choices
+        choices = {}
         format[:choices].each do |choice|
           choices[choice[:name]] = choice[:value]
         end
