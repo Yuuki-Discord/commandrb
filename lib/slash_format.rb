@@ -3,12 +3,17 @@
 # Allows registration and invocation of interactions
 # (more commonly known as slash commands).
 class SlashFormat
-  # @return [Discord::Bot]
+  # @return [CommandrbBot]
+  attr_accessor :command_bot
+
+  # @return [Discordrb::Bot]
   attr_accessor :bot
 
   # Allows manipulation of slash commands.
-  def initialize(bot)
-    @bot = bot
+  # @param command_bot [CommandrbBot] The bot to interface with.
+  def initialize(command_bot)
+    @command_bot = command_bot
+    @bot = command_bot.bot
   end
 
   # Registers a command against Discord.
@@ -25,6 +30,8 @@ class SlashFormat
 
       map_arg_format_to_options command_format, options
     end
+
+    puts "Registered slash command #{command_name}" if @command_bot.debug_mode
 
     @bot.application_command(command_name) do |event|
       # TODO: handle

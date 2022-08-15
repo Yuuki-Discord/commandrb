@@ -18,6 +18,9 @@ class CommandrbBot
   # A store of registered commands. Do not manipulate this throughout runtime.
   attr_accessor :commands
 
+  # Whether this bot is currently in debug mode.
+  attr_accessor :debug_mode
+
   # A list of global prefixes. It is not recommended to change this while the bot is running.
   attr_accessor :prefixes
 
@@ -99,9 +102,12 @@ class CommandrbBot
     @commands[name.to_sym] = attributes
     @commands[name.to_sym][:code] = block
 
+    # Text-only commands should not be registered for slash commands.
+    return if attributes[:text_only] == true
+
     # Register with slash handler if not in group.
     # (Group commands will be registered upon run to avoid duplicates.)
-    return unless attributes.key? :group
+    return if attributes.key? :group
 
     @slash_format.register_command(name.to_sym, @commands[name.to_sym])
   end
@@ -165,7 +171,7 @@ class CommandrbBot
     end
 
     # Command processing
-    @slash_format = SlashFormat.new @bot
+    @slash_format = SlashFormat.new self
 
     return if @config[:disable_text_commands] == true
 
