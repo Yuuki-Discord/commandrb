@@ -77,6 +77,9 @@ class CommandrbBot
       ArgFormat.validate_arg_formats(attributes[:arg_format])
     end
 
+    # Owner-only commands should remain text-only for the time being.
+    attributes[:text_only] = true if attributes[:owners_only] == true
+
     # We need to enforce a description if not text-only.
     unless attributes.key? :text_only
       attributes[:text_only] = false
