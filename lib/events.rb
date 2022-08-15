@@ -21,8 +21,9 @@ module Discordrb
 
       # Simple wrapper to allow respond not require the content keyword.
       # (see Interaction#respond)
-      def respond(content, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil, wait: false, components: nil, &block)
-        return @interaction.respond(
+      def respond(content, tts: nil, embeds: nil, allowed_mentions: nil, flags: 0, ephemeral: nil,
+                  wait: false, components: nil, &block)
+        @interaction.respond(
           content: content, tts: tts, embeds: embeds, allowed_mentions: allowed_mentions,
           flags: flags, ephemeral: ephemeral, wait: wait, components: components, &block
         )
