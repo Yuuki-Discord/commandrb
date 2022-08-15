@@ -3,6 +3,7 @@
 require 'discordrb'
 require 'arg_format'
 require_relative 'format'
+require_relative 'events'
 require_relative 'helper'
 require_relative 'text_format'
 require_relative 'slash_format'
