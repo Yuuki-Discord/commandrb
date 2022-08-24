@@ -36,3 +36,6 @@ Metrics/PerceivedComplexity:
 # TODO: Please correct and remove!
 Metrics/ClassLength:
   Enabled: false
+
+Metrics/ParameterLists:
+  Enabled: false
