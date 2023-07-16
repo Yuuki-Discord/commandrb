@@ -72,6 +72,8 @@ class CommandrbBot
       client_id: @config[:client_id],
       parse_self: init_parse_self,
       type: @config[:type]
+      ignore_bots: @config[:parse_bots] == false,
+      intents: init_hash[:intents]
     )
 
     unless init_hash[:ready].nil?
