@@ -161,7 +161,8 @@ class CommandrbBot
       token: @config[:token],
       client_id: @config[:client_id],
       parse_self: false,
-      ignore_bots: @config[:parse_bots] == false
+      ignore_bots: @config[:parse_bots] == false,
+      intents: @config[:intents]
     )
 
     unless init_hash[:ready].nil?
