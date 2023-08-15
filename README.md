@@ -1,5 +1,8 @@
 # Commandrb
 
+> **Warning**\
+> **Commandrb is not actively maintained. Only security and critical bug fixes will be made.**
+
 A customisable and (probably) easy to use commands system for discordrb
 It's probably not recommended to use this in it's early stages (< 1.0) because it will be riddled with bugs and features that don't work as intended.
 However, feel free to use it if you want, just don't be surprised when it doesn't work exactly the way you want it to. (If you find an issue feel free to report it, just don't act all entitled, you were warned.)
